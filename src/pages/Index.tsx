@@ -1,14 +1,29 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { GameProvider, useGame } from "@/context/GameContext";
+import LandingScreen from "@/components/game/LandingScreen";
+import TeamSelect from "@/components/game/TeamSelect";
+import StudentGame from "@/components/game/StudentGame";
+import TeacherDashboard from "@/components/game/TeacherDashboard";
+import ProjectorView from "@/components/game/ProjectorView";
+import FinalScreen from "@/components/game/FinalScreen";
 
-const Index = () => {
+function GameRouter() {
+  const { view } = useGame();
+
+  switch (view) {
+    case "landing": return <LandingScreen />;
+    case "team-select": return <TeamSelect />;
+    case "student-game": return <StudentGame />;
+    case "teacher-dash": return <TeacherDashboard />;
+    case "projector": return <ProjectorView />;
+    case "final": return <FinalScreen />;
+    default: return <LandingScreen />;
+  }
+}
+
+export default function Index() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <GameProvider>
+      <GameRouter />
+    </GameProvider>
   );
-};
-
-export default Index;
+}
