@@ -34,8 +34,8 @@ export default function TeamSelect() {
           Присъедини се към един от трите отбора
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((num, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((num, i) => (
             <motion.button
               key={num}
               initial={{ opacity: 0, y: 20 }}

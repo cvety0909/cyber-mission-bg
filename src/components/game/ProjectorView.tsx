@@ -48,7 +48,7 @@ export default function ProjectorView() {
               >
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${Math.min((count / 3) * 100, 100)}%` }}
+                  animate={{ width: `${Math.min((count / 4) * 100, 100)}%` }}
                   className={`absolute inset-0 opacity-25 ${colorClass}`}
                 />
                 <div className="absolute inset-0 flex justify-between items-center px-8">

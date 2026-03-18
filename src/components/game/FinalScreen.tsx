@@ -15,17 +15,18 @@ export default function FinalScreen() {
     return () => window.removeEventListener("resize", handle);
   }, []);
 
-  const sortedTeams = ([1, 2, 3] as number[]).sort((a, b) => scores[b] - scores[a]);
+  const sortedTeams = ([1, 2, 3, 4] as number[]).sort((a, b) => scores[b] - scores[a]);
 
   const podiumData = [
-    { team: sortedTeams[1], place: "2 място", height: "h-32 md:h-40", width: "w-28 md:w-32", bg: "bg-secondary", textColor: "text-muted-foreground" },
-    { team: sortedTeams[0], place: "1 място", height: "h-44 md:h-56", width: "w-32 md:w-40", bg: "bg-primary", textColor: "text-warn" },
-    { team: sortedTeams[2], place: "3 място", height: "h-24 md:h-32", width: "w-28 md:w-32", bg: "bg-card", textColor: "text-muted-foreground" },
+    { team: sortedTeams[1], place: "2 място", height: "h-32 md:h-40", width: "w-24 md:w-28", bg: "bg-secondary", textColor: "text-muted-foreground" },
+    { team: sortedTeams[0], place: "1 място", height: "h-44 md:h-56", width: "w-28 md:w-36", bg: "bg-primary", textColor: "text-warn" },
+    { team: sortedTeams[2], place: "3 място", height: "h-24 md:h-32", width: "w-24 md:w-28", bg: "bg-card", textColor: "text-muted-foreground" },
+    { team: sortedTeams[3], place: "4 място", height: "h-16 md:h-24", width: "w-24 md:w-28", bg: "bg-card", textColor: "text-muted-foreground" },
   ];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 grid-bg">
-      <Confetti width={windowSize.w} height={windowSize.h} colors={["#0ea5e9", "#10b981", "#f59e0b"]} recycle={false} numberOfPieces={300} />
+      <Confetti width={windowSize.w} height={windowSize.h} colors={["#0ea5e9", "#10b981", "#f59e0b", "#a855f7"]} recycle={false} numberOfPieces={300} />
 
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
