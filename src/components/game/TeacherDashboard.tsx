@@ -24,7 +24,7 @@ export default function TeacherDashboard() {
         </div>
 
         <div className="space-y-4">
-          {[1, 2, 3].map((num) => (
+          {[1, 2, 3, 4].map((num) => (
             <div key={num} className="cyber-surface p-5">
               <div className="flex justify-between items-end mb-3">
                 <span className="text-muted-foreground font-bold uppercase text-xs tracking-widest font-body">Отбор {num}</span>
