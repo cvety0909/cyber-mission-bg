@@ -7,6 +7,7 @@ const TEAM_COLORS = [
   "hover:shadow-[0_0_30px_hsla(199,89%,48%,0.4)] hover:border-primary",
   "hover:shadow-[0_0_30px_hsla(142,71%,45%,0.4)] hover:border-safe",
   "hover:shadow-[0_0_30px_hsla(45,93%,47%,0.4)] hover:border-warn",
+  "hover:shadow-[0_0_30px_hsla(280,80%,55%,0.4)] hover:border-[hsl(280,80%,55%)]",
 ];
 
 export default function TeamSelect() {
