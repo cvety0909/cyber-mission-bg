@@ -169,7 +169,7 @@ export default function TeacherDashboard() {
                 Статус на отборите
               </h3>
               <div className="flex gap-3">
-                {[1, 2, 3].map((num) => {
+                {[1, 2, 3, 4].map((num) => {
                   const voted = getTeamVote(num);
                   return (
                     <div
