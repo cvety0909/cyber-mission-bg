@@ -4,7 +4,7 @@ import CyberButton from "./CyberButton";
 import { useGame } from "@/context/GameContext";
 
 export default function StudentGame() {
-  const { selectedTeam, phase, currentMission, currentMissionIdx, totalMissions, hasVoted, submitVote } = useGame();
+  const { selectedTeam, teamNames, phase, currentMission, currentMissionIdx, totalMissions, hasVoted, submitVote, sessionCode } = useGame();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 grid-bg">
@@ -12,11 +12,20 @@ export default function StudentGame() {
       <div className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-10">
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-primary" />
-          <span className="font-display font-bold text-sm uppercase tracking-widest text-foreground">Отбор {selectedTeam}</span>
+          <span className="font-display font-bold text-sm uppercase tracking-widest text-foreground">
+            {teamNames[selectedTeam!] || `Отбор ${selectedTeam}`}
+          </span>
         </div>
-        <span className="text-xs text-muted-foreground font-body">
-          Мисия {currentMissionIdx + 1}/{totalMissions}
-        </span>
+        <div className="flex items-center gap-3">
+          {sessionCode && (
+            <span className="text-xs text-muted-foreground font-body bg-secondary px-2 py-1 rounded">
+              Код: {sessionCode}
+            </span>
+          )}
+          <span className="text-xs text-muted-foreground font-body">
+            Мисия {currentMissionIdx + 1}/{totalMissions}
+          </span>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
@@ -31,7 +40,9 @@ export default function StudentGame() {
             <div className="inline-block p-5 rounded-full bg-primary/10 mb-6 animate-pulse-glow">
               <Clock className="w-12 h-12 text-primary" />
             </div>
-            <h2 className="text-2xl font-display font-bold mb-2 text-foreground">Отбор {selectedTeam} е в готовност</h2>
+            <h2 className="text-2xl font-display font-bold mb-2 text-foreground">
+              {teamNames[selectedTeam!] || `Отбор ${selectedTeam}`} е в готовност
+            </h2>
             <p className="text-muted-foreground font-body">Изчакай учителя да стартира мисията...</p>
           </motion.div>
         )}
@@ -64,7 +75,7 @@ export default function StudentGame() {
           </motion.div>
         )}
 
-        {hasVoted && (
+        {hasVoted && phase !== "final" && (
           <motion.div
             key="voted"
             initial={{ opacity: 0, scale: 0.9 }}

@@ -1,24 +1,52 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Shield, ChevronRight, Eye, BookOpen, RotateCcw, Play, Projector } from "lucide-react";
+import { Trophy, Shield, ChevronRight, Eye, BookOpen, RotateCcw, Play, Projector, Pencil, Check, X } from "lucide-react";
 import CyberButton from "./CyberButton";
 import { useGame } from "@/context/GameContext";
 
 export default function TeacherDashboard() {
   const {
     currentMission, currentMissionIdx, totalMissions,
-    phase, votes, scores,
+    phase, currentMissionVotes, scores, sessionCode, teamNames,
     startGame, nextMission, revealAnswers, showExplanation,
-    awardPoints, resetGame, setView,
+    awardPoints, renameTeam, resetGame, setView,
   } = useGame();
 
-  const getVoteCount = (answer: string) => votes.filter((v) => v.answer === answer).length;
-  const getTeamVote = (team: number) => votes.find((v) => v.team === team);
+  const [editingTeam, setEditingTeam] = useState<number | null>(null);
+  const [teamNameInput, setTeamNameInput] = useState("");
+
+  const getVoteCount = (answer: string) => currentMissionVotes.filter((v) => v.answer === answer).length;
+  const getTeamVote = (team: number) => currentMissionVotes.find((v) => v.team === team);
+
+  const startRename = (team: number) => {
+    setEditingTeam(team);
+    setTeamNameInput(teamNames[team] || `Отбор ${team}`);
+  };
+
+  const confirmRename = () => {
+    if (editingTeam !== null && teamNameInput.trim()) {
+      renameTeam(editingTeam, teamNameInput.trim());
+    }
+    setEditingTeam(null);
+  };
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 gap-0">
       {/* Sidebar */}
       <div className="lg:col-span-3 bg-card p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-border">
-        <div className="flex items-center gap-3 mb-8">
+        {/* Session Code */}
+        {sessionCode && (
+          <div className="mb-6 p-4 rounded-xl bg-primary/10 border border-primary/20 text-center">
+            <span className="text-xs font-bold uppercase text-primary tracking-widest font-body block mb-1">
+              Код на сесията
+            </span>
+            <span className="text-4xl font-display font-black text-primary tracking-[0.2em]">
+              {sessionCode}
+            </span>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 mb-6">
           <Trophy className="text-warn" />
           <h2 className="text-xl font-display font-black uppercase italic tracking-tighter text-foreground">Класиране</h2>
         </div>
@@ -27,7 +55,28 @@ export default function TeacherDashboard() {
           {[1, 2, 3, 4].map((num) => (
             <div key={num} className="cyber-surface p-5">
               <div className="flex justify-between items-end mb-3">
-                <span className="text-muted-foreground font-bold uppercase text-xs tracking-widest font-body">Отбор {num}</span>
+                {editingTeam === num ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      value={teamNameInput}
+                      onChange={e => setTeamNameInput(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && confirmRename()}
+                      className="bg-background border border-border rounded px-2 py-0.5 text-xs text-foreground font-body w-24 focus:outline-none focus:border-primary"
+                      autoFocus
+                    />
+                    <button onClick={confirmRename} className="text-safe p-0.5"><Check className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setEditingTeam(null)} className="text-muted-foreground p-0.5"><X className="w-3.5 h-3.5" /></button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground font-bold uppercase text-xs tracking-widest font-body">
+                      {teamNames[num] || `Отбор ${num}`}
+                    </span>
+                    <button onClick={() => startRename(num)} className="text-muted-foreground hover:text-foreground p-0.5 transition-colors">
+                      <Pencil className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                )}
                 <span className="text-3xl font-display font-black text-primary tabular-nums">{scores[num]}</span>
               </div>
               <div className="flex gap-2">
@@ -180,7 +229,7 @@ export default function TeacherDashboard() {
                           : "bg-secondary text-muted-foreground"
                       }`}
                     >
-                      <div className="text-[10px] font-bold uppercase mb-1 font-body">Отбор {num}</div>
+                      <div className="text-[10px] font-bold uppercase mb-1 font-body">{teamNames[num] || `Отбор ${num}`}</div>
                       <div className="text-xs font-display font-black">{voted ? "ГОТОВ" : "МИСЛИ..."}</div>
                       {voted && (phase === "revealed" || phase === "explained") && (
                         <div className="text-[10px] mt-1 font-body opacity-80">{voted.answer}</div>

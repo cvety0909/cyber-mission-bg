@@ -34,7 +34,7 @@ export default function LandingScreen() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <CyberButton
-            onClick={() => { setRole("student"); setView("team-select"); }}
+            onClick={() => { setRole("student"); setView("join-session"); }}
             className="text-lg"
           >
             <Users className="w-5 h-5 mr-2 inline" />
@@ -42,7 +42,7 @@ export default function LandingScreen() {
           </CyberButton>
           <CyberButton
             variant="ghost"
-            onClick={() => { setRole("teacher"); setView("teacher-dash"); }}
+            onClick={() => { setRole("teacher"); setView("mission-manager"); }}
             className="text-lg"
           >
             <Monitor className="w-5 h-5 mr-2 inline" />
