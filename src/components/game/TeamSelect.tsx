@@ -7,6 +7,7 @@ const TEAM_COLORS = [
   "hover:shadow-[0_0_30px_hsla(199,89%,48%,0.4)] hover:border-primary",
   "hover:shadow-[0_0_30px_hsla(142,71%,45%,0.4)] hover:border-safe",
   "hover:shadow-[0_0_30px_hsla(45,93%,47%,0.4)] hover:border-warn",
+  "hover:shadow-[0_0_30px_hsla(280,80%,55%,0.4)] hover:border-[hsl(280,80%,55%)]",
 ];
 
 export default function TeamSelect() {
@@ -33,8 +34,8 @@ export default function TeamSelect() {
           Присъедини се към един от трите отбора
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((num, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((num, i) => (
             <motion.button
               key={num}
               initial={{ opacity: 0, y: 20 }}

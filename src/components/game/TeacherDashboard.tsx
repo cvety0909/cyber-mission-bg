@@ -24,7 +24,7 @@ export default function TeacherDashboard() {
         </div>
 
         <div className="space-y-4">
-          {[1, 2, 3].map((num) => (
+          {[1, 2, 3, 4].map((num) => (
             <div key={num} className="cyber-surface p-5">
               <div className="flex justify-between items-end mb-3">
                 <span className="text-muted-foreground font-bold uppercase text-xs tracking-widest font-body">Отбор {num}</span>
@@ -151,7 +151,7 @@ export default function TeacherDashboard() {
                     >
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((count / 3) * 100, 100)}%` }}
+                        animate={{ width: `${Math.min((count / 4) * 100, 100)}%` }}
                         className={`absolute inset-0 opacity-20 ${colorClass}`}
                       />
                       <div className="absolute inset-0 flex justify-between items-center px-5">
@@ -169,7 +169,7 @@ export default function TeacherDashboard() {
                 Статус на отборите
               </h3>
               <div className="flex gap-3">
-                {[1, 2, 3].map((num) => {
+                {[1, 2, 3, 4].map((num) => {
                   const voted = getTeamVote(num);
                   return (
                     <div

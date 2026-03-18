@@ -46,7 +46,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     currentMissionIdx: 0,
     phase: "waiting",
     votes: [],
-    scores: { 1: 0, 2: 0, 3: 0 },
+    scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
     hasVoted: false,
   });
 
@@ -90,7 +90,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       currentMissionIdx: 0,
       phase: "waiting",
       votes: [],
-      scores: { 1: 0, 2: 0, 3: 0 },
+      scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
       hasVoted: false,
     });
   }, []);
