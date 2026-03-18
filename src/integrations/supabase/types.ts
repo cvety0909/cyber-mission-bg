@@ -14,7 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      sessions: {
+        Row: {
+          code: string
+          created_at: string
+          current_mission_idx: number
+          id: string
+          missions: Json
+          phase: string
+          scores: Json
+          status: string
+          teacher_token: string
+          team_names: Json
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_mission_idx?: number
+          id?: string
+          missions?: Json
+          phase?: string
+          scores?: Json
+          status?: string
+          teacher_token: string
+          team_names?: Json
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_mission_idx?: number
+          id?: string
+          missions?: Json
+          phase?: string
+          scores?: Json
+          status?: string
+          teacher_token?: string
+          team_names?: Json
+        }
+        Relationships: []
+      }
+      votes: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          mission_idx: number
+          session_id: string
+          team: number
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          mission_idx: number
+          session_id: string
+          team: number
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          mission_idx?: number
+          session_id?: string
+          team?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
