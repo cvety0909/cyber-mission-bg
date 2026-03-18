@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Users, ArrowLeft } from "lucide-react";
 import { useGame } from "@/context/GameContext";
-import CyberButton from "./CyberButton";
 
 const TEAM_COLORS = [
   "hover:shadow-[0_0_30px_hsla(199,89%,48%,0.4)] hover:border-primary",
@@ -11,7 +10,7 @@ const TEAM_COLORS = [
 ];
 
 export default function TeamSelect() {
-  const { selectTeam, setView, setRole } = useGame();
+  const { selectTeam, setView, setRole, teamNames, sessionCode } = useGame();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 grid-bg">
@@ -27,11 +26,18 @@ export default function TeamSelect() {
           <ArrowLeft className="w-4 h-4" /> Назад
         </button>
 
+        {sessionCode && (
+          <div className="text-center mb-6">
+            <span className="text-xs font-bold uppercase text-muted-foreground tracking-widest font-body">Сесия: </span>
+            <span className="text-lg font-display font-black text-primary tracking-widest">{sessionCode}</span>
+          </div>
+        )}
+
         <h2 className="text-3xl md:text-4xl font-display font-bold mb-2 uppercase tracking-widest text-center text-foreground">
           Избери своя отбор
         </h2>
         <p className="text-muted-foreground text-center mb-10 font-body">
-          Присъедини се към един от трите отбора
+          Присъедини се към един от четирите отбора
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -48,7 +54,7 @@ export default function TeamSelect() {
             >
               <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               <span className="text-2xl font-display font-black uppercase text-foreground">
-                Отбор {num}
+                {teamNames[num] || `Отбор ${num}`}
               </span>
             </motion.button>
           ))}

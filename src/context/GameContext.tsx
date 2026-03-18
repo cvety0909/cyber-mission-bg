@@ -1,116 +1,330 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { MISSIONS, type AnswerType } from "@/data/missions";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
+import { MISSIONS as DEFAULT_MISSIONS, type AnswerType, type Mission } from "@/data/missions";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type UserRole = "student" | "teacher" | null;
-export type GameView = "landing" | "team-select" | "student-game" | "teacher-dash" | "final" | "projector";
-export type GamePhase = "waiting" | "active" | "revealed" | "explained";
+export type GameView = "landing" | "join-session" | "team-select" | "mission-manager" | "student-game" | "teacher-dash" | "final" | "projector";
+export type GamePhase = "waiting" | "active" | "revealed" | "explained" | "final";
 
 interface Vote {
   team: number;
   answer: AnswerType;
+  mission_idx: number;
 }
 
 interface GameState {
   view: GameView;
   role: UserRole;
+  sessionId: string | null;
+  sessionCode: string | null;
+  teacherToken: string | null;
   selectedTeam: number | null;
   currentMissionIdx: number;
   phase: GamePhase;
   votes: Vote[];
   scores: Record<number, number>;
-  hasVoted: boolean;
+  teamNames: Record<number, string>;
+  missions: Mission[];
 }
 
 interface GameContextType extends GameState {
+  hasVoted: boolean;
+  currentMission: Mission;
+  totalMissions: number;
+  currentMissionVotes: Vote[];
   setView: (v: GameView) => void;
   setRole: (r: UserRole) => void;
   selectTeam: (t: number) => void;
+  createSession: (missions: Mission[]) => Promise<void>;
+  joinSession: (code: string) => Promise<boolean>;
   submitVote: (answer: AnswerType) => void;
   startGame: () => void;
   nextMission: () => void;
   revealAnswers: () => void;
   showExplanation: () => void;
   awardPoints: (team: number, pts: number) => void;
+  renameTeam: (team: number, name: string) => void;
   resetGame: () => void;
-  currentMission: typeof MISSIONS[0];
-  totalMissions: number;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
 
-export function GameProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<GameState>({
-    view: "landing",
-    role: null,
-    selectedTeam: null,
-    currentMissionIdx: 0,
-    phase: "waiting",
-    votes: [],
-    scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
-    hasVoted: false,
-  });
+function generateSessionCode(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
-  const setView = useCallback((view: GameView) => setState((s) => ({ ...s, view })), []);
-  const setRole = useCallback((role: UserRole) => setState((s) => ({ ...s, role })), []);
+const INITIAL_STATE: GameState = {
+  view: "landing",
+  role: null,
+  sessionId: null,
+  sessionCode: null,
+  teacherToken: null,
+  selectedTeam: null,
+  currentMissionIdx: 0,
+  phase: "waiting",
+  votes: [],
+  scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
+  teamNames: { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" },
+  missions: DEFAULT_MISSIONS,
+};
+
+export function GameProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<GameState>(INITIAL_STATE);
+  const sessionIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    sessionIdRef.current = state.sessionId;
+  }, [state.sessionId]);
+
+  // Derived state
+  const currentMissionVotes = state.votes.filter(v => v.mission_idx === state.currentMissionIdx);
+  const hasVoted = state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam);
+  const currentMission = state.missions[state.currentMissionIdx] || DEFAULT_MISSIONS[0];
+  const totalMissions = state.missions.length;
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!state.sessionId) return;
+
+    // Fetch initial votes
+    const fetchVotes = async () => {
+      const { data } = await (supabase as any).from('votes').select('*').eq('session_id', state.sessionId);
+      if (data) {
+        setState(s => ({
+          ...s,
+          votes: data.map((v: any) => ({ team: v.team, answer: v.answer as AnswerType, mission_idx: v.mission_idx })),
+        }));
+      }
+    };
+    fetchVotes();
+
+    const channel = supabase
+      .channel(`game-${state.sessionId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'sessions',
+        filter: `id=eq.${state.sessionId}`,
+      }, (payload: any) => {
+        const d = payload.new;
+        setState(s => {
+          const newPhase = d.phase as GamePhase;
+          let newView = s.view;
+          if (newPhase === 'final' && s.role === 'student') {
+            newView = 'final';
+          }
+          return {
+            ...s,
+            phase: newPhase,
+            currentMissionIdx: d.current_mission_idx,
+            scores: d.scores,
+            teamNames: d.team_names,
+            missions: d.missions,
+            view: newView,
+          };
+        });
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'votes',
+        filter: `session_id=eq.${state.sessionId}`,
+      }, (payload: any) => {
+        const v = payload.new;
+        setState(s => ({
+          ...s,
+          votes: [...s.votes, { team: v.team, answer: v.answer as AnswerType, mission_idx: v.mission_idx }],
+        }));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [state.sessionId]);
+
+  const setView = useCallback((view: GameView) => setState(s => ({ ...s, view })), []);
+  const setRole = useCallback((role: UserRole) => setState(s => ({ ...s, role })), []);
 
   const selectTeam = useCallback((team: number) => {
-    setState((s) => ({ ...s, selectedTeam: team, view: "student-game" }));
+    setState(s => ({ ...s, selectedTeam: team, view: "student-game" }));
   }, []);
 
-  const submitVote = useCallback((answer: AnswerType) => {
-    setState((s) => {
-      if (s.hasVoted) return s;
-      return { ...s, votes: [...s.votes, { team: s.selectedTeam!, answer }], hasVoted: true };
-    });
+  const updateSession = useCallback(async (updates: Record<string, any>) => {
+    const sid = sessionIdRef.current;
+    if (!sid) return;
+    await (supabase as any).from('sessions').update(updates).eq('id', sid);
   }, []);
+
+  const createSession = useCallback(async (missions: Mission[]) => {
+    const code = generateSessionCode();
+    const teacherToken = crypto.randomUUID();
+
+    const { data, error } = await (supabase as any).from('sessions').insert({
+      code,
+      teacher_token: teacherToken,
+      missions,
+      phase: 'waiting',
+      current_mission_idx: 0,
+      scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
+      team_names: { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" },
+    }).select().single();
+
+    if (error || !data) {
+      toast.error("Грешка при създаване на сесия");
+      console.error(error);
+      return;
+    }
+
+    localStorage.setItem('teacherToken', teacherToken);
+    setState(s => ({
+      ...s,
+      sessionId: data.id,
+      sessionCode: code,
+      teacherToken,
+      missions,
+      view: 'teacher-dash',
+      role: 'teacher',
+      phase: 'waiting',
+      currentMissionIdx: 0,
+      scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
+      teamNames: { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" },
+      votes: [],
+    }));
+  }, []);
+
+  const joinSession = useCallback(async (code: string): Promise<boolean> => {
+    const { data, error } = await (supabase as any)
+      .from('sessions')
+      .select('*')
+      .eq('code', code.trim())
+      .eq('status', 'active')
+      .single();
+
+    if (error || !data) {
+      toast.error("Невалиден код на сесия");
+      return false;
+    }
+
+    setState(s => ({
+      ...s,
+      sessionId: data.id,
+      sessionCode: code.trim(),
+      phase: data.phase as GamePhase,
+      currentMissionIdx: data.current_mission_idx,
+      scores: data.scores,
+      teamNames: data.team_names,
+      missions: data.missions,
+      view: 'team-select',
+      role: 'student',
+    }));
+
+    return true;
+  }, []);
+
+  const submitVote = useCallback(async (answer: AnswerType) => {
+    if (!sessionIdRef.current) return;
+
+    setState(s => {
+      if (s.selectedTeam === null) return s;
+      const alreadyVoted = s.votes.some(v => v.mission_idx === s.currentMissionIdx && v.team === s.selectedTeam);
+      if (alreadyVoted) return s;
+
+      // Optimistic update
+      const newVote: Vote = { team: s.selectedTeam, answer, mission_idx: s.currentMissionIdx };
+      return { ...s, votes: [...s.votes, newVote] };
+    });
+
+    // Fire DB insert
+    const currentState = state;
+    if (currentState.selectedTeam === null) return;
+
+    const { error } = await (supabase as any).from('votes').insert({
+      session_id: sessionIdRef.current,
+      mission_idx: currentState.currentMissionIdx,
+      team: currentState.selectedTeam,
+      answer,
+    });
+
+    if (error) {
+      if (error.code === '23505') {
+        toast.error("Вашият отбор вече е гласувал");
+      } else {
+        toast.error("Грешка при гласуване");
+        console.error(error);
+      }
+    }
+  }, [state.selectedTeam, state.currentMissionIdx]);
 
   const startGame = useCallback(() => {
-    setState((s) => ({ ...s, phase: "active", currentMissionIdx: 0, votes: [], hasVoted: false }));
-  }, []);
+    updateSession({ phase: 'active', current_mission_idx: 0 });
+    setState(s => ({ ...s, phase: 'active' as GamePhase, currentMissionIdx: 0, votes: [] }));
+  }, [updateSession]);
 
   const nextMission = useCallback(() => {
-    setState((s) => {
-      if (s.currentMissionIdx >= MISSIONS.length - 1) return { ...s, view: "final" };
-      return { ...s, currentMissionIdx: s.currentMissionIdx + 1, phase: "active", votes: [], hasVoted: false };
+    setState(s => {
+      const nextIdx = s.currentMissionIdx + 1;
+      if (nextIdx >= s.missions.length) {
+        updateSession({ phase: 'final' });
+        return { ...s, phase: 'final' as GamePhase, view: 'final' as GameView };
+      }
+      updateSession({ phase: 'active', current_mission_idx: nextIdx });
+      return { ...s, phase: 'active' as GamePhase, currentMissionIdx: nextIdx };
     });
-  }, []);
+  }, [updateSession]);
 
-  const revealAnswers = useCallback(() => setState((s) => ({ ...s, phase: "revealed" })), []);
-  const showExplanation = useCallback(() => setState((s) => ({ ...s, phase: "explained" })), []);
+  const revealAnswers = useCallback(() => {
+    updateSession({ phase: 'revealed' });
+    setState(s => ({ ...s, phase: 'revealed' as GamePhase }));
+  }, [updateSession]);
+
+  const showExplanation = useCallback(() => {
+    updateSession({ phase: 'explained' });
+    setState(s => ({ ...s, phase: 'explained' as GamePhase }));
+  }, [updateSession]);
 
   const awardPoints = useCallback((team: number, pts: number) => {
-    setState((s) => ({ ...s, scores: { ...s.scores, [team]: s.scores[team] + pts } }));
-  }, []);
+    setState(s => {
+      const newScores = { ...s.scores, [team]: (s.scores[team] || 0) + pts };
+      updateSession({ scores: newScores });
+      return { ...s, scores: newScores };
+    });
+  }, [updateSession]);
+
+  const renameTeam = useCallback((team: number, name: string) => {
+    setState(s => {
+      const newNames = { ...s.teamNames, [team]: name };
+      updateSession({ team_names: newNames });
+      return { ...s, teamNames: newNames };
+    });
+  }, [updateSession]);
 
   const resetGame = useCallback(() => {
-    setState({
-      view: "landing",
-      role: null,
-      selectedTeam: null,
-      currentMissionIdx: 0,
-      phase: "waiting",
-      votes: [],
-      scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
-      hasVoted: false,
-    });
+    setState({ ...INITIAL_STATE });
   }, []);
 
   return (
     <GameContext.Provider
       value={{
         ...state,
+        hasVoted,
+        currentMission,
+        totalMissions,
+        currentMissionVotes,
         setView,
         setRole,
         selectTeam,
+        createSession,
+        joinSession,
         submitVote,
         startGame,
         nextMission,
         revealAnswers,
         showExplanation,
         awardPoints,
+        renameTeam,
         resetGame,
-        currentMission: MISSIONS[state.currentMissionIdx],
-        totalMissions: MISSIONS.length,
       }}
     >
       {children}

@@ -1,20 +1,40 @@
 import { motion } from "framer-motion";
-import { Shield, ArrowLeft } from "lucide-react";
+import { Shield, ArrowLeft, Trophy } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 
 export default function ProjectorView() {
-  const { currentMission, currentMissionIdx, totalMissions, phase, votes, setView } = useGame();
+  const { currentMission, currentMissionIdx, totalMissions, phase, currentMissionVotes, scores, teamNames, sessionCode, setView } = useGame();
 
-  const getVoteCount = (answer: string) => votes.filter((v) => v.answer === answer).length;
+  const getVoteCount = (answer: string) => currentMissionVotes.filter((v) => v.answer === answer).length;
 
   return (
     <div className="min-h-screen flex flex-col p-8 lg:p-16 grid-bg">
-      <button
-        onClick={() => setView("teacher-dash")}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors self-start"
-      >
-        <ArrowLeft className="w-4 h-4" /> Обратно към панела
-      </button>
+      <div className="flex justify-between items-center mb-8">
+        <button
+          onClick={() => setView("teacher-dash")}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Обратно към панела
+        </button>
+
+        {/* Scores bar */}
+        <div className="flex items-center gap-4">
+          <Trophy className="w-5 h-5 text-warn" />
+          {[1, 2, 3, 4].map(num => (
+            <div key={num} className="flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase text-muted-foreground font-body">{teamNames[num]}</span>
+              <span className="text-lg font-display font-black text-primary">{scores[num]}</span>
+            </div>
+          ))}
+        </div>
+
+        {sessionCode && (
+          <div className="text-right">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-body block">Код</span>
+            <span className="text-2xl font-display font-black text-primary tracking-[0.15em]">{sessionCode}</span>
+          </div>
+        )}
+      </div>
 
       <div className="flex-grow flex flex-col items-center justify-center text-center">
         <div className="mb-4 flex items-center gap-3">
