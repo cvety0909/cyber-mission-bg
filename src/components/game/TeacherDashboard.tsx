@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Shield, ChevronRight, Eye, BookOpen, RotateCcw, Play, Projector, Pencil, Check, X } from "lucide-react";
+import { Trophy, Shield, ChevronRight, Eye, BookOpen, MessageCircle, RotateCcw, Play, Projector, Pencil, Check, X } from "lucide-react";
 import CyberButton from "./CyberButton";
 import { useGame } from "@/context/GameContext";
 
@@ -8,7 +8,7 @@ export default function TeacherDashboard() {
   const {
     currentMission, currentMissionIdx, totalMissions,
     phase, currentMissionVotes, scores, sessionCode, teamNames,
-    startGame, nextMission, revealAnswers, showExplanation,
+    startGame, nextMission, revealAnswers, showExplanation, showDiscussion,
     awardPoints, renameTeam, resetGame, setView,
   } = useGame();
 
@@ -30,11 +30,13 @@ export default function TeacherDashboard() {
     setEditingTeam(null);
   };
 
+  const difficultyLabel = currentMission.difficulty === "discussion" ? "Дискусия" : "Бърза";
+  const pointsLabel = currentMission.difficulty === "discussion" ? "2 т." : "1 т.";
+
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 gap-0">
       {/* Sidebar */}
       <div className="lg:col-span-3 bg-card p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-border">
-        {/* Session Code */}
         {sessionCode && (
           <div className="mb-6 p-4 rounded-xl bg-primary/10 border border-primary/20 text-center">
             <span className="text-xs font-bold uppercase text-primary tracking-widest font-body block mb-1">
@@ -112,9 +114,17 @@ export default function TeacherDashboard() {
         {/* Top bar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <span className="text-primary font-bold tracking-widest uppercase text-sm font-body">
-              Мисия {currentMissionIdx + 1} от {totalMissions}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="text-primary font-bold tracking-widest uppercase text-sm font-body">
+                Мисия {currentMissionIdx + 1} от {totalMissions}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-secondary text-muted-foreground font-body uppercase">
+                {difficultyLabel} ({pointsLabel})
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-secondary text-muted-foreground font-body">
+                {currentMission.category}
+              </span>
+            </div>
             <h1 className="text-3xl lg:text-4xl font-display font-black uppercase tracking-tight text-foreground">
               {currentMission.title}
             </h1>
@@ -135,7 +145,12 @@ export default function TeacherDashboard() {
                 <BookOpen className="w-4 h-4 mr-2 inline" /> Покажи обяснение
               </CyberButton>
             )}
-            {(phase === "revealed" || phase === "explained") && (
+            {phase === "explained" && currentMission.discussionQuestion && (
+              <CyberButton variant="ghost" onClick={showDiscussion} className="text-sm py-3">
+                <MessageCircle className="w-4 h-4 mr-2 inline" /> Покажи дискусия
+              </CyberButton>
+            )}
+            {(phase === "revealed" || phase === "explained" || phase === "discussion") && (
               <CyberButton onClick={nextMission} className="text-sm py-3">
                 Следваща <ChevronRight className="w-4 h-4 ml-1 inline" />
               </CyberButton>
@@ -161,6 +176,20 @@ export default function TeacherDashboard() {
               "{currentMission.scenario}"
             </p>
 
+            {(phase === "revealed") && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 p-5 rounded-xl bg-safe/10 border border-safe/20 relative z-10"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Check className="w-4 h-4 text-safe" />
+                  <span className="font-display font-bold uppercase text-safe text-sm tracking-widest">Верен отговор</span>
+                </div>
+                <p className="text-2xl font-display font-black text-safe">{currentMission.answer}</p>
+              </motion.div>
+            )}
+
             {phase === "explained" && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -168,13 +197,27 @@ export default function TeacherDashboard() {
                 className="mt-8 p-5 rounded-xl bg-primary/10 border border-primary/20 relative z-10"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Shield className="w-4 h-4 text-primary" />
+                  <BookOpen className="w-4 h-4 text-primary" />
                   <span className="font-display font-bold uppercase text-primary text-sm tracking-widest">Обяснение</span>
                 </div>
                 <p className="text-secondary-foreground leading-relaxed font-body">{currentMission.explanation}</p>
-                <div className="mt-3 inline-block px-3 py-1 rounded-md bg-primary/20 text-primary text-xs font-bold uppercase font-body">
+                <div className="mt-3 inline-block px-3 py-1 rounded-md bg-safe/20 text-safe text-xs font-bold uppercase font-body">
                   Верен отговор: {currentMission.answer}
                 </div>
+              </motion.div>
+            )}
+
+            {phase === "discussion" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 p-5 rounded-xl bg-warn/10 border border-warn/20 relative z-10"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageCircle className="w-4 h-4 text-warn" />
+                  <span className="font-display font-bold uppercase text-warn text-sm tracking-widest">Въпрос за дискусия</span>
+                </div>
+                <p className="text-foreground leading-relaxed font-body text-lg">{currentMission.discussionQuestion || "Няма въпрос за дискусия."}</p>
               </motion.div>
             )}
           </div>
@@ -189,7 +232,7 @@ export default function TeacherDashboard() {
                 {(["STOP", "ВНИМАНИЕ", "БЕЗОПАСНО"] as const).map((type) => {
                   const count = getVoteCount(type);
                   const colorClass = type === "STOP" ? "bg-destructive" : type === "ВНИМАНИЕ" ? "bg-warn" : "bg-safe";
-                  const isCorrect = (phase === "revealed" || phase === "explained") && currentMission.answer === type;
+                  const isCorrect = (phase === "revealed" || phase === "explained" || phase === "discussion") && currentMission.answer === type;
 
                   return (
                     <div
@@ -231,8 +274,10 @@ export default function TeacherDashboard() {
                     >
                       <div className="text-[10px] font-bold uppercase mb-1 font-body">{teamNames[num] || `Отбор ${num}`}</div>
                       <div className="text-xs font-display font-black">{voted ? "ГОТОВ" : "МИСЛИ..."}</div>
-                      {voted && (phase === "revealed" || phase === "explained") && (
-                        <div className="text-[10px] mt-1 font-body opacity-80">{voted.answer}</div>
+                      {voted && (phase === "revealed" || phase === "explained" || phase === "discussion") && (
+                        <div className={`text-[10px] mt-1 font-body ${voted.answer === currentMission.answer ? "text-safe" : "text-destructive"}`}>
+                          {voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
+                        </div>
                       )}
                     </div>
                   );
