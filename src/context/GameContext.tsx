@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 export type UserRole = "student" | "teacher" | null;
 export type GameView = "landing" | "join-session" | "team-select" | "mission-manager" | "student-game" | "teacher-dash" | "final" | "projector";
-export type GamePhase = "waiting" | "active" | "revealed" | "explained" | "final";
+export type GamePhase = "waiting" | "active" | "revealed" | "explained" | "discussion" | "final";
 
 interface Vote {
   team: number;
@@ -43,6 +43,7 @@ interface GameContextType extends GameState {
   nextMission: () => void;
   revealAnswers: () => void;
   showExplanation: () => void;
+  showDiscussion: () => void;
   awardPoints: (team: number, pts: number) => void;
   renameTeam: (team: number, name: string) => void;
   resetGame: () => void;
@@ -53,6 +54,17 @@ const GameContext = createContext<GameContextType | null>(null);
 function generateSessionCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
+
+const FALLBACK_MISSION: Mission = {
+  id: 0,
+  title: "Мисия не е намерена",
+  scenario: "Няма налична мисия. Моля, свържете се с учителя.",
+  answer: "STOP",
+  explanation: "Няма налично обяснение.",
+  discussionQuestion: "",
+  difficulty: "quick",
+  category: "Неизвестна",
+};
 
 const INITIAL_STATE: GameState = {
   view: "landing",
@@ -80,14 +92,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Derived state
   const currentMissionVotes = state.votes.filter(v => v.mission_idx === state.currentMissionIdx);
   const hasVoted = state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam);
-  const currentMission = state.missions[state.currentMissionIdx] || DEFAULT_MISSIONS[0];
-  const totalMissions = state.missions.length;
+
+  const getSafeMission = (missions: Mission[], idx: number): Mission => {
+    if (!missions || missions.length === 0) return FALLBACK_MISSION;
+    const m = missions[idx];
+    if (!m || !m.title || !m.scenario) return FALLBACK_MISSION;
+    return m;
+  };
+
+  const currentMission = getSafeMission(state.missions, state.currentMissionIdx);
+  const totalMissions = state.missions?.length || 0;
 
   // Realtime subscription
   useEffect(() => {
     if (!state.sessionId) return;
 
-    // Fetch initial votes
     const fetchVotes = async () => {
       const { data } = await (supabase as any).from('votes').select('*').eq('session_id', state.sessionId);
       if (data) {
@@ -120,7 +139,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             currentMissionIdx: d.current_mission_idx,
             scores: d.scores,
             teamNames: d.team_names,
-            missions: d.missions,
+            missions: d.missions || s.missions,
             view: newView,
           };
         });
@@ -215,7 +234,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       currentMissionIdx: data.current_mission_idx,
       scores: data.scores,
       teamNames: data.team_names,
-      missions: data.missions,
+      missions: data.missions || DEFAULT_MISSIONS,
       view: 'team-select',
       role: 'student',
     }));
@@ -231,12 +250,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const alreadyVoted = s.votes.some(v => v.mission_idx === s.currentMissionIdx && v.team === s.selectedTeam);
       if (alreadyVoted) return s;
 
-      // Optimistic update
       const newVote: Vote = { team: s.selectedTeam, answer, mission_idx: s.currentMissionIdx };
       return { ...s, votes: [...s.votes, newVote] };
     });
 
-    // Fire DB insert
     const currentState = state;
     if (currentState.selectedTeam === null) return;
 
@@ -275,13 +292,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [updateSession]);
 
   const revealAnswers = useCallback(() => {
-    updateSession({ phase: 'revealed' });
-    setState(s => ({ ...s, phase: 'revealed' as GamePhase }));
+    // Auto-score: award points to teams with correct answer
+    setState(s => {
+      const mission = getSafeMission(s.missions, s.currentMissionIdx);
+      const missionVotes = s.votes.filter(v => v.mission_idx === s.currentMissionIdx);
+      const points = mission.difficulty === "discussion" ? 2 : 1;
+      const newScores = { ...s.scores };
+
+      missionVotes.forEach(v => {
+        if (v.answer === mission.answer) {
+          newScores[v.team] = (newScores[v.team] || 0) + points;
+        }
+      });
+
+      updateSession({ phase: 'revealed', scores: newScores });
+      return { ...s, phase: 'revealed' as GamePhase, scores: newScores };
+    });
   }, [updateSession]);
 
   const showExplanation = useCallback(() => {
     updateSession({ phase: 'explained' });
     setState(s => ({ ...s, phase: 'explained' as GamePhase }));
+  }, [updateSession]);
+
+  const showDiscussion = useCallback(() => {
+    updateSession({ phase: 'discussion' });
+    setState(s => ({ ...s, phase: 'discussion' as GamePhase }));
   }, [updateSession]);
 
   const awardPoints = useCallback((team: number, pts: number) => {
@@ -322,6 +358,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         nextMission,
         revealAnswers,
         showExplanation,
+        showDiscussion,
         awardPoints,
         renameTeam,
         resetGame,
