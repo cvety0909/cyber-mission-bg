@@ -224,7 +224,7 @@ export default function MissionManager() {
                     onChange={e => setEditingMission({ ...editingMission, answer: e.target.value as AnswerType })}
                     className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground font-body focus:outline-none focus:border-primary"
                   >
-                    <option value="STOP">STOP</option>
+                    <option value="STOP">ОПАСНО</option>
                     <option value="ВНИМАНИЕ">ВНИМАНИЕ</option>
                     <option value="БЕЗОПАСНО">БЕЗОПАСНО</option>
                   </select>
