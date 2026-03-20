@@ -333,7 +333,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         phase: 'active' as GamePhase,
         currentMissionIdx: nextIdx,
         showCinematic: shouldShowCinematic ? cinematicWave : null,
-        showCountdown: !shouldShowCinematic, // countdown if no cinematic
+        showCountdown: false, // countdown only after cinematics
       };
     });
   }, [updateSession]);
