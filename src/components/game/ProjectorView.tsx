@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Shield, ArrowLeft, Trophy, BookOpen, MessageCircle, CheckCircle } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import ScorePopup from "./ScorePopup";
+import PreGameWaiting from "./PreGameWaiting";
 
 export default function ProjectorView() {
   const { currentMission, currentMissionIdx, totalMissions, phase, currentMissionVotes, scores, prevScores, teamNames, sessionCode, setView } = useGame();
