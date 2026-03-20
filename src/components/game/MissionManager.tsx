@@ -158,7 +158,7 @@ export default function MissionManager() {
               <div className="flex-grow min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-display font-bold text-sm text-foreground truncate">{m.title}</span>
-                  <span className={`text-xs font-bold uppercase font-body ${answerColor(m.answer)}`}>{m.answer}</span>
+                  <span className={`text-xs font-bold uppercase font-body ${answerColor(m.answer)}`}>{m.answer === "STOP" ? "ОПАСНО" : m.answer}</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-body uppercase">
                     {m.difficulty === "quick" ? "бърза" : "дискусия"}
                   </span>
@@ -224,7 +224,7 @@ export default function MissionManager() {
                     onChange={e => setEditingMission({ ...editingMission, answer: e.target.value as AnswerType })}
                     className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground font-body focus:outline-none focus:border-primary"
                   >
-                    <option value="STOP">STOP</option>
+                    <option value="STOP">ОПАСНО</option>
                     <option value="ВНИМАНИЕ">ВНИМАНИЕ</option>
                     <option value="БЕЗОПАСНО">БЕЗОПАСНО</option>
                   </select>
