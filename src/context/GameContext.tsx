@@ -58,6 +58,7 @@ interface GameContextType extends GameState {
   resetGame: () => void;
   updateTeacherSettings: (s: Partial<TeacherSettings>) => void;
   dismissCinematic: () => void;
+  dismissCountdown: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
