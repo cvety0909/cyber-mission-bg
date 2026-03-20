@@ -13,6 +13,11 @@ interface Vote {
   mission_idx: number;
 }
 
+interface TeacherSettings {
+  cinematicsEnabled: boolean;
+  musicEnabled: boolean;
+}
+
 interface GameState {
   view: GameView;
   role: UserRole;
@@ -24,8 +29,11 @@ interface GameState {
   phase: GamePhase;
   votes: Vote[];
   scores: Record<number, number>;
+  prevScores: Record<number, number>;
   teamNames: Record<number, string>;
   missions: Mission[];
+  teacherSettings: TeacherSettings;
+  showCinematic: number | null; // waveIndex 0-4 or null
 }
 
 interface GameContextType extends GameState {
@@ -47,6 +55,8 @@ interface GameContextType extends GameState {
   awardPoints: (team: number, pts: number) => void;
   renameTeam: (team: number, name: string) => void;
   resetGame: () => void;
+  updateTeacherSettings: (s: Partial<TeacherSettings>) => void;
+  dismissCinematic: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -66,6 +76,9 @@ const FALLBACK_MISSION: Mission = {
   category: "Неизвестна",
 };
 
+const INITIAL_SCORES = { 1: 0, 2: 0, 3: 0, 4: 0 };
+const INITIAL_TEAM_NAMES = { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" };
+
 const INITIAL_STATE: GameState = {
   view: "landing",
   role: null,
@@ -76,10 +89,21 @@ const INITIAL_STATE: GameState = {
   currentMissionIdx: 0,
   phase: "waiting",
   votes: [],
-  scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
-  teamNames: { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" },
+  scores: { ...INITIAL_SCORES },
+  prevScores: { ...INITIAL_SCORES },
+  teamNames: { ...INITIAL_TEAM_NAMES },
   missions: DEFAULT_MISSIONS,
+  teacherSettings: { cinematicsEnabled: true, musicEnabled: false },
+  showCinematic: null,
 };
+
+// Which cinematic to show at which mission boundary
+function getCinematicWave(missionIdx: number): number | null {
+  if (missionIdx === 5) return 1;
+  if (missionIdx === 10) return 2;
+  if (missionIdx === 15) return 3;
+  return null;
+}
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>(INITIAL_STATE);
@@ -89,7 +113,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     sessionIdRef.current = state.sessionId;
   }, [state.sessionId]);
 
-  // Derived state
   const currentMissionVotes = state.votes.filter(v => v.mission_idx === state.currentMissionIdx);
   const hasVoted = state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam);
 
@@ -137,6 +160,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ...s,
             phase: newPhase,
             currentMissionIdx: d.current_mission_idx,
+            prevScores: { ...s.scores },
             scores: d.scores,
             teamNames: d.team_names,
             missions: d.missions || s.missions,
@@ -186,8 +210,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       missions,
       phase: 'waiting',
       current_mission_idx: 0,
-      scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
-      team_names: { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" },
+      scores: { ...INITIAL_SCORES },
+      team_names: { ...INITIAL_TEAM_NAMES },
     }).select().single();
 
     if (error || !data) {
@@ -207,8 +231,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       role: 'teacher',
       phase: 'waiting',
       currentMissionIdx: 0,
-      scores: { 1: 0, 2: 0, 3: 0, 4: 0 },
-      teamNames: { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" },
+      scores: { ...INITIAL_SCORES },
+      prevScores: { ...INITIAL_SCORES },
+      teamNames: { ...INITIAL_TEAM_NAMES },
       votes: [],
     }));
   }, []);
@@ -233,6 +258,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       phase: data.phase as GamePhase,
       currentMissionIdx: data.current_mission_idx,
       scores: data.scores,
+      prevScores: data.scores,
       teamNames: data.team_names,
       missions: data.missions || DEFAULT_MISSIONS,
       view: 'team-select',
@@ -275,6 +301,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.selectedTeam, state.currentMissionIdx]);
 
   const startGame = useCallback(() => {
+    // Show intro cinematic if enabled
+    setState(s => {
+      if (s.teacherSettings.cinematicsEnabled) {
+        return { ...s, showCinematic: 0 };
+      }
+      return s;
+    });
+
     updateSession({ phase: 'active', current_mission_idx: 0 });
     setState(s => ({ ...s, phase: 'active' as GamePhase, currentMissionIdx: 0, votes: [] }));
   }, [updateSession]);
@@ -286,17 +320,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
         updateSession({ phase: 'final' });
         return { ...s, phase: 'final' as GamePhase, view: 'final' as GameView };
       }
+
+      // Check for cinematic at wave boundary
+      const cinematicWave = getCinematicWave(nextIdx);
+      const shouldShowCinematic = cinematicWave !== null && s.teacherSettings.cinematicsEnabled;
+
       updateSession({ phase: 'active', current_mission_idx: nextIdx });
-      return { ...s, phase: 'active' as GamePhase, currentMissionIdx: nextIdx };
+      return {
+        ...s,
+        phase: 'active' as GamePhase,
+        currentMissionIdx: nextIdx,
+        showCinematic: shouldShowCinematic ? cinematicWave : null,
+      };
     });
   }, [updateSession]);
 
   const revealAnswers = useCallback(() => {
-    // Auto-score: award points to teams with correct answer
     setState(s => {
       const mission = getSafeMission(s.missions, s.currentMissionIdx);
       const missionVotes = s.votes.filter(v => v.mission_idx === s.currentMissionIdx);
       const points = mission.difficulty === "discussion" ? 2 : 1;
+      const prevScores = { ...s.scores };
       const newScores = { ...s.scores };
 
       missionVotes.forEach(v => {
@@ -306,7 +350,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       });
 
       updateSession({ phase: 'revealed', scores: newScores });
-      return { ...s, phase: 'revealed' as GamePhase, scores: newScores };
+      return { ...s, phase: 'revealed' as GamePhase, prevScores, scores: newScores };
     });
   }, [updateSession]);
 
@@ -322,9 +366,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const awardPoints = useCallback((team: number, pts: number) => {
     setState(s => {
+      const prevScores = { ...s.scores };
       const newScores = { ...s.scores, [team]: (s.scores[team] || 0) + pts };
       updateSession({ scores: newScores });
-      return { ...s, scores: newScores };
+      return { ...s, prevScores, scores: newScores };
     });
   }, [updateSession]);
 
@@ -339,6 +384,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const resetGame = useCallback(() => {
     setState({ ...INITIAL_STATE });
   }, []);
+
+  const updateTeacherSettings = useCallback((updates: Partial<TeacherSettings>) => {
+    setState(s => ({
+      ...s,
+      teacherSettings: { ...s.teacherSettings, ...updates },
+    }));
+  }, []);
+
+  const dismissCinematic = useCallback(() => {
+    setState(s => ({ ...s, showCinematic: null }));
+  }, []);
+
+  // Final cinematic after last mission
+  const handleFinalView = useCallback(() => {
+    setState(s => {
+      if (s.phase === 'final' && s.view !== 'final') {
+        if (s.teacherSettings.cinematicsEnabled) {
+          return { ...s, showCinematic: 4, view: 'final' as GameView };
+        }
+        return { ...s, view: 'final' as GameView };
+      }
+      return s;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (state.phase === 'final') handleFinalView();
+  }, [state.phase, handleFinalView]);
 
   return (
     <GameContext.Provider
@@ -362,6 +435,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         awardPoints,
         renameTeam,
         resetGame,
+        updateTeacherSettings,
+        dismissCinematic,
       }}
     >
       {children}

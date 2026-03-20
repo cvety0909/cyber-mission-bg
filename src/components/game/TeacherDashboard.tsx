@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Shield, ChevronRight, Eye, BookOpen, MessageCircle, RotateCcw, Play, Projector, Pencil, Check, X } from "lucide-react";
+import { Trophy, Shield, ChevronRight, Eye, BookOpen, MessageCircle, RotateCcw, Play, Projector, Pencil, Check, X, Settings2, Film, Volume2, VolumeX } from "lucide-react";
 import CyberButton from "./CyberButton";
+import ScorePopup from "./ScorePopup";
 import { useGame } from "@/context/GameContext";
 
 export default function TeacherDashboard() {
   const {
     currentMission, currentMissionIdx, totalMissions,
-    phase, currentMissionVotes, scores, sessionCode, teamNames,
+    phase, currentMissionVotes, scores, prevScores, sessionCode, teamNames,
     startGame, nextMission, revealAnswers, showExplanation, showDiscussion,
     awardPoints, renameTeam, resetGame, setView,
+    teacherSettings, updateTeacherSettings,
   } = useGame();
 
   const [editingTeam, setEditingTeam] = useState<number | null>(null);
   const [teamNameInput, setTeamNameInput] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
 
   const getVoteCount = (answer: string) => currentMissionVotes.filter((v) => v.answer === answer).length;
   const getTeamVote = (team: number) => currentMissionVotes.find((v) => v.team === team);
@@ -34,7 +37,7 @@ export default function TeacherDashboard() {
   const pointsLabel = currentMission.difficulty === "discussion" ? "2 т." : "1 т.";
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 gap-0">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 gap-0 relative z-10">
       {/* Sidebar */}
       <div className="lg:col-span-3 bg-card p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-border">
         {sessionCode && (
@@ -79,7 +82,7 @@ export default function TeacherDashboard() {
                     </button>
                   </div>
                 )}
-                <span className="text-3xl font-display font-black text-primary tabular-nums">{scores[num]}</span>
+                <ScorePopup score={scores[num]} prevScore={prevScores[num]} />
               </div>
               <div className="flex gap-2">
                 <button
@@ -100,6 +103,38 @@ export default function TeacherDashboard() {
         </div>
 
         <div className="mt-8 space-y-2">
+          {/* Settings toggle */}
+          <CyberButton variant="ghost" className="w-full text-xs py-3" onClick={() => setShowSettings(!showSettings)}>
+            <Settings2 className="w-3 h-3 mr-2 inline" /> Настройки
+          </CyberButton>
+
+          {showSettings && (
+            <div className="cyber-surface p-4 space-y-3 text-xs">
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="flex items-center gap-2 text-muted-foreground font-body">
+                  <Film className="w-3.5 h-3.5" /> Кинематични сцени
+                </span>
+                <button
+                  onClick={() => updateTeacherSettings({ cinematicsEnabled: !teacherSettings.cinematicsEnabled })}
+                  className={`w-9 h-5 rounded-full transition-colors ${teacherSettings.cinematicsEnabled ? "bg-primary" : "bg-secondary"}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-foreground transition-transform mx-0.5 ${teacherSettings.cinematicsEnabled ? "translate-x-4" : "translate-x-0"}`} />
+                </button>
+              </label>
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="flex items-center gap-2 text-muted-foreground font-body">
+                  {teacherSettings.musicEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />} Фонова музика
+                </span>
+                <button
+                  onClick={() => updateTeacherSettings({ musicEnabled: !teacherSettings.musicEnabled })}
+                  className={`w-9 h-5 rounded-full transition-colors ${teacherSettings.musicEnabled ? "bg-primary" : "bg-secondary"}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-foreground transition-transform mx-0.5 ${teacherSettings.musicEnabled ? "translate-x-4" : "translate-x-0"}`} />
+                </button>
+              </label>
+            </div>
+          )}
+
           <CyberButton variant="ghost" className="w-full text-xs py-3" onClick={() => setView("projector")}>
             <Projector className="w-3 h-3 mr-2 inline" /> Режим за прожектиране
           </CyberButton>
@@ -160,9 +195,11 @@ export default function TeacherDashboard() {
 
         {/* Progress bar */}
         <div className="w-full h-1 bg-secondary rounded-full mb-8">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${((currentMissionIdx + 1) / totalMissions) * 100}%` }}
+          <motion.div
+            className="h-full bg-primary rounded-full"
+            initial={false}
+            animate={{ width: `${((currentMissionIdx + 1) / totalMissions) * 100}%` }}
+            transition={{ duration: 0.5 }}
           />
         </div>
 
@@ -264,8 +301,9 @@ export default function TeacherDashboard() {
                 {[1, 2, 3, 4].map((num) => {
                   const voted = getTeamVote(num);
                   return (
-                    <div
+                    <motion.div
                       key={num}
+                      animate={voted ? { boxShadow: "0 0 12px hsla(199,89%,48%,0.2)" } : { boxShadow: "none" }}
                       className={`flex-1 p-4 rounded-xl transition-all ${
                         voted
                           ? "bg-primary/10 ring-1 ring-primary/30 text-primary"
@@ -279,7 +317,7 @@ export default function TeacherDashboard() {
                           {voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
