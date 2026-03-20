@@ -320,7 +320,7 @@ export default function TeacherDashboard() {
                             className={`absolute inset-0 opacity-20 ${colorClass}`}
                           />
                           <div className="absolute inset-0 flex justify-between items-center px-5">
-                            <span className="font-display font-black uppercase tracking-wider text-sm text-foreground">{type}</span>
+                            <span className="font-display font-black uppercase tracking-wider text-sm text-foreground">{displayLabel}</span>
                             <span className="text-xl font-display font-black text-foreground">{count}</span>
                           </div>
                         </div>
