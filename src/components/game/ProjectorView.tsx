@@ -69,6 +69,7 @@ export default function ProjectorView() {
             {(["STOP", "ВНИМАНИЕ", "БЕЗОПАСНО"] as const).map((type) => {
               const count = getVoteCount(type);
               const colorClass = type === "STOP" ? "bg-destructive" : type === "ВНИМАНИЕ" ? "bg-warn" : "bg-safe";
+              const displayLabel = type === "STOP" ? "ОПАСНО" : type;
               const isCorrect = (phase === "revealed" || phase === "explained" || phase === "discussion") && currentMission.answer === type;
 
               return (
