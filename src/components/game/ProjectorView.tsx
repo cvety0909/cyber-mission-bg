@@ -104,7 +104,7 @@ export default function ProjectorView() {
             className="p-6 rounded-2xl bg-safe/10 border border-safe/20 max-w-2xl"
           >
             <p className="text-2xl font-display font-black text-safe">
-              Верен отговор: {currentMission.answer}
+               Верен отговор: {currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}
             </p>
             <p className="text-sm text-muted-foreground font-body mt-1">
               {currentMission.difficulty === "discussion" ? "+2 точки" : "+1 точка"} за верен отговор
