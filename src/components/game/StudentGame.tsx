@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Clock, CheckCircle, BookOpen, MessageCircle } from "lucide-react";
 import CyberButton from "./CyberButton";
+import PreGameWaiting from "./PreGameWaiting";
 import { useGame } from "@/context/GameContext";
 
 export default function StudentGame() {
@@ -37,15 +38,8 @@ export default function StudentGame() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="text-center"
           >
-            <div className="inline-block p-5 rounded-full bg-primary/10 mb-6 animate-pulse-glow">
-              <Clock className="w-12 h-12 text-primary" />
-            </div>
-            <h2 className="text-2xl font-display font-bold mb-2 text-foreground">
-              {teamNames[selectedTeam!] || `Отбор ${selectedTeam}`} е в готовност
-            </h2>
-            <p className="text-muted-foreground font-body">Изчакай учителя да стартира мисията...</p>
+            <PreGameWaiting />
           </motion.div>
         )}
 

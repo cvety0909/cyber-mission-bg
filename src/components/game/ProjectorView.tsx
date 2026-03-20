@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Shield, ArrowLeft, Trophy, BookOpen, MessageCircle, CheckCircle } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import ScorePopup from "./ScorePopup";
+import PreGameWaiting from "./PreGameWaiting";
 
 export default function ProjectorView() {
   const { currentMission, currentMissionIdx, totalMissions, phase, currentMissionVotes, scores, prevScores, teamNames, sessionCode, setView } = useGame();
@@ -143,11 +144,7 @@ export default function ProjectorView() {
           </motion.div>
         )}
 
-        {phase === "waiting" && (
-          <div className="text-center">
-            <p className="text-2xl text-muted-foreground font-body">Изчакваме учителя да започне играта...</p>
-          </div>
-        )}
+        {phase === "waiting" && <PreGameWaiting />}
       </div>
     </div>
   );
