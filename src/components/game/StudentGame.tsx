@@ -117,7 +117,7 @@ export default function StudentGame() {
             >
               <CheckCircle className="w-10 h-10 text-safe mx-auto mb-3" />
               <p className="text-sm text-muted-foreground font-body mb-1">Верен отговор:</p>
-              <p className="text-3xl font-display font-black text-safe">{currentMission.answer}</p>
+              <p className="text-3xl font-display font-black text-safe">{currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}</p>
               <p className="text-xs text-muted-foreground font-body mt-2">
                 {currentMission.difficulty === "discussion" ? "+2 точки" : "+1 точка"} за верен отговор
               </p>
