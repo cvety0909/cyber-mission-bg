@@ -1,15 +1,16 @@
 import { motion } from "framer-motion";
 import { Shield, ArrowLeft, Trophy, BookOpen, MessageCircle, CheckCircle } from "lucide-react";
 import { useGame } from "@/context/GameContext";
+import ScorePopup from "./ScorePopup";
 
 export default function ProjectorView() {
-  const { currentMission, currentMissionIdx, totalMissions, phase, currentMissionVotes, scores, teamNames, sessionCode, setView } = useGame();
+  const { currentMission, currentMissionIdx, totalMissions, phase, currentMissionVotes, scores, prevScores, teamNames, sessionCode, setView } = useGame();
 
   const getVoteCount = (answer: string) => currentMissionVotes.filter((v) => v.answer === answer).length;
   const difficultyLabel = currentMission.difficulty === "discussion" ? "Дискусия" : "Бърза";
 
   return (
-    <div className="min-h-screen flex flex-col p-8 lg:p-16 grid-bg">
+    <div className="min-h-screen flex flex-col p-8 lg:p-16 grid-bg relative z-10">
       <div className="flex justify-between items-center mb-8">
         <button
           onClick={() => setView("teacher-dash")}
@@ -24,7 +25,7 @@ export default function ProjectorView() {
           {[1, 2, 3, 4].map(num => (
             <div key={num} className="flex items-center gap-1.5">
               <span className="text-xs font-bold uppercase text-muted-foreground font-body">{teamNames[num]}</span>
-              <span className="text-lg font-display font-black text-primary">{scores[num]}</span>
+              <ScorePopup score={scores[num]} prevScore={prevScores[num]} />
             </div>
           ))}
         </div>
@@ -95,8 +96,9 @@ export default function ProjectorView() {
 
         {phase === "revealed" && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
             className="p-6 rounded-2xl bg-safe/10 border border-safe/20 max-w-2xl"
           >
             <p className="text-2xl font-display font-black text-safe">
