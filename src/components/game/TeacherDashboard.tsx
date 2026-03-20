@@ -274,7 +274,7 @@ export default function TeacherDashboard() {
                     </div>
                     <p className="text-secondary-foreground leading-relaxed font-body">{currentMission.explanation}</p>
                     <div className="mt-3 inline-block px-3 py-1 rounded-md bg-safe/20 text-safe text-xs font-bold uppercase font-body">
-                      Верен отговор: {currentMission.answer}
+                      Верен отговор: {currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}
                     </div>
                   </motion.div>
                 )}
