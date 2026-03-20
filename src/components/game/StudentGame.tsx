@@ -9,7 +9,7 @@ export default function StudentGame() {
   const difficultyLabel = currentMission.difficulty === "discussion" ? "Дискусия" : "Бърза";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 grid-bg">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 grid-bg relative z-10">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-10">
         <div className="flex items-center gap-2">
@@ -104,8 +104,8 @@ export default function StudentGame() {
         {phase === "revealed" && (
           <motion.div
             key="revealed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             className="text-center w-full max-w-lg"
           >
@@ -115,14 +115,19 @@ export default function StudentGame() {
             <p className="text-lg font-body text-foreground/80 mb-6">
               "{currentMission.scenario}"
             </p>
-            <div className="cyber-surface p-6 border border-safe/30">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+              className="cyber-surface p-6 border border-safe/30"
+            >
               <CheckCircle className="w-10 h-10 text-safe mx-auto mb-3" />
               <p className="text-sm text-muted-foreground font-body mb-1">Верен отговор:</p>
               <p className="text-3xl font-display font-black text-safe">{currentMission.answer}</p>
               <p className="text-xs text-muted-foreground font-body mt-2">
                 {currentMission.difficulty === "discussion" ? "+2 точки" : "+1 точка"} за верен отговор
               </p>
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
