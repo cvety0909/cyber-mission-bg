@@ -258,7 +258,7 @@ export default function TeacherDashboard() {
                       <Check className="w-4 h-4 text-safe" />
                       <span className="font-display font-bold uppercase text-safe text-sm tracking-widest">Верен отговор</span>
                     </div>
-                    <p className="text-2xl font-display font-black text-safe">{currentMission.answer}</p>
+                    <p className="text-2xl font-display font-black text-safe">{currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}</p>
                   </motion.div>
                 )}
 
@@ -274,7 +274,7 @@ export default function TeacherDashboard() {
                     </div>
                     <p className="text-secondary-foreground leading-relaxed font-body">{currentMission.explanation}</p>
                     <div className="mt-3 inline-block px-3 py-1 rounded-md bg-safe/20 text-safe text-xs font-bold uppercase font-body">
-                      Верен отговор: {currentMission.answer}
+                      Верен отговор: {currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}
                     </div>
                   </motion.div>
                 )}
@@ -304,6 +304,7 @@ export default function TeacherDashboard() {
                     {(["STOP", "ВНИМАНИЕ", "БЕЗОПАСНО"] as const).map((type) => {
                       const count = getVoteCount(type);
                       const colorClass = type === "STOP" ? "bg-destructive" : type === "ВНИМАНИЕ" ? "bg-warn" : "bg-safe";
+                      const displayLabel = type === "STOP" ? "ОПАСНО" : type;
                       const isCorrect = (phase === "revealed" || phase === "explained" || phase === "discussion") && currentMission.answer === type;
 
                       return (
@@ -319,7 +320,7 @@ export default function TeacherDashboard() {
                             className={`absolute inset-0 opacity-20 ${colorClass}`}
                           />
                           <div className="absolute inset-0 flex justify-between items-center px-5">
-                            <span className="font-display font-black uppercase tracking-wider text-sm text-foreground">{type}</span>
+                            <span className="font-display font-black uppercase tracking-wider text-sm text-foreground">{displayLabel}</span>
                             <span className="text-xl font-display font-black text-foreground">{count}</span>
                           </div>
                         </div>
@@ -349,7 +350,7 @@ export default function TeacherDashboard() {
                           <div className="text-xs font-display font-black">{voted ? "ГОТОВ" : "МИСЛИ..."}</div>
                           {voted && (phase === "revealed" || phase === "explained" || phase === "discussion") && (
                             <div className={`text-[10px] mt-1 font-body ${voted.answer === currentMission.answer ? "text-safe" : "text-destructive"}`}>
-                              {voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
+                              {voted.answer === "STOP" ? "ОПАСНО" : voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
                             </div>
                           )}
                         </motion.div>

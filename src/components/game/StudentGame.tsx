@@ -67,7 +67,7 @@ export default function StudentGame() {
             </p>
             <div className="flex flex-col gap-4">
               <CyberButton variant="stop" onClick={() => submitVote("STOP")} className="py-6 text-2xl w-full">
-                🛑 STOP
+                🛑 ОПАСНО
               </CyberButton>
               <CyberButton variant="warn" onClick={() => submitVote("ВНИМАНИЕ")} className="py-6 text-2xl w-full">
                 ⚠️ ВНИМАНИЕ
@@ -117,7 +117,7 @@ export default function StudentGame() {
             >
               <CheckCircle className="w-10 h-10 text-safe mx-auto mb-3" />
               <p className="text-sm text-muted-foreground font-body mb-1">Верен отговор:</p>
-              <p className="text-3xl font-display font-black text-safe">{currentMission.answer}</p>
+              <p className="text-3xl font-display font-black text-safe">{currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}</p>
               <p className="text-xs text-muted-foreground font-body mt-2">
                 {currentMission.difficulty === "discussion" ? "+2 точки" : "+1 точка"} за верен отговор
               </p>
@@ -142,7 +142,7 @@ export default function StudentGame() {
               <p className="text-foreground/90 font-body leading-relaxed">{currentMission.explanation}</p>
             </div>
             <div className="inline-block px-4 py-2 rounded-lg bg-safe/10 border border-safe/20">
-              <span className="text-sm font-bold text-safe font-body">Верен отговор: {currentMission.answer}</span>
+              <span className="text-sm font-bold text-safe font-body">Верен отговор: {currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}</span>
             </div>
           </motion.div>
         )}

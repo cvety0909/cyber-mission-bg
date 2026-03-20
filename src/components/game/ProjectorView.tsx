@@ -69,6 +69,7 @@ export default function ProjectorView() {
             {(["STOP", "ВНИМАНИЕ", "БЕЗОПАСНО"] as const).map((type) => {
               const count = getVoteCount(type);
               const colorClass = type === "STOP" ? "bg-destructive" : type === "ВНИМАНИЕ" ? "bg-warn" : "bg-safe";
+              const displayLabel = type === "STOP" ? "ОПАСНО" : type;
               const isCorrect = (phase === "revealed" || phase === "explained" || phase === "discussion") && currentMission.answer === type;
 
               return (
@@ -85,7 +86,7 @@ export default function ProjectorView() {
                   />
                   <div className="absolute inset-0 flex justify-between items-center px-8">
                     <span className="font-display font-black uppercase tracking-wider text-xl text-foreground">
-                      {type} {isCorrect && <CheckCircle className="w-5 h-5 text-safe inline ml-2" />}
+                      {displayLabel} {isCorrect && <CheckCircle className="w-5 h-5 text-safe inline ml-2" />}
                     </span>
                     <span className="text-3xl font-display font-black text-foreground">{count}</span>
                   </div>
@@ -103,7 +104,7 @@ export default function ProjectorView() {
             className="p-6 rounded-2xl bg-safe/10 border border-safe/20 max-w-2xl"
           >
             <p className="text-2xl font-display font-black text-safe">
-              Верен отговор: {currentMission.answer}
+               Верен отговор: {currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}
             </p>
             <p className="text-sm text-muted-foreground font-body mt-1">
               {currentMission.difficulty === "discussion" ? "+2 точки" : "+1 точка"} за верен отговор
@@ -123,7 +124,7 @@ export default function ProjectorView() {
             </div>
             <p className="text-lg font-body text-foreground/90">{currentMission.explanation}</p>
             <span className="inline-block mt-3 px-4 py-1.5 bg-safe/20 text-safe rounded-lg text-sm font-bold uppercase font-body">
-              Верен отговор: {currentMission.answer}
+              Верен отговор: {currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}
             </span>
           </motion.div>
         )}
