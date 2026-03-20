@@ -144,11 +144,7 @@ export default function ProjectorView() {
           </motion.div>
         )}
 
-        {phase === "waiting" && (
-          <div className="text-center">
-            <p className="text-2xl text-muted-foreground font-body">Изчакваме учителя да започне играта...</p>
-          </div>
-        )}
+        {phase === "waiting" && <PreGameWaiting />}
       </div>
     </div>
   );
