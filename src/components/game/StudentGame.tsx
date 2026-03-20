@@ -142,7 +142,7 @@ export default function StudentGame() {
               <p className="text-foreground/90 font-body leading-relaxed">{currentMission.explanation}</p>
             </div>
             <div className="inline-block px-4 py-2 rounded-lg bg-safe/10 border border-safe/20">
-              <span className="text-sm font-bold text-safe font-body">Верен отговор: {currentMission.answer}</span>
+              <span className="text-sm font-bold text-safe font-body">Верен отговор: {currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}</span>
             </div>
           </motion.div>
         )}
