@@ -86,7 +86,7 @@ export default function ProjectorView() {
                   />
                   <div className="absolute inset-0 flex justify-between items-center px-8">
                     <span className="font-display font-black uppercase tracking-wider text-xl text-foreground">
-                      {type} {isCorrect && <CheckCircle className="w-5 h-5 text-safe inline ml-2" />}
+                      {displayLabel} {isCorrect && <CheckCircle className="w-5 h-5 text-safe inline ml-2" />}
                     </span>
                     <span className="text-3xl font-display font-black text-foreground">{count}</span>
                   </div>
