@@ -34,6 +34,7 @@ interface GameState {
   missions: Mission[];
   teacherSettings: TeacherSettings;
   showCinematic: number | null; // waveIndex 0-4 or null
+  showCountdown: boolean;
 }
 
 interface GameContextType extends GameState {
@@ -57,6 +58,7 @@ interface GameContextType extends GameState {
   resetGame: () => void;
   updateTeacherSettings: (s: Partial<TeacherSettings>) => void;
   dismissCinematic: () => void;
+  dismissCountdown: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -95,6 +97,7 @@ const INITIAL_STATE: GameState = {
   missions: DEFAULT_MISSIONS,
   teacherSettings: { cinematicsEnabled: true, musicEnabled: false },
   showCinematic: null,
+  showCountdown: false,
 };
 
 // Which cinematic to show at which mission boundary
@@ -301,16 +304,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.selectedTeam, state.currentMissionIdx]);
 
   const startGame = useCallback(() => {
-    // Show intro cinematic if enabled
-    setState(s => {
-      if (s.teacherSettings.cinematicsEnabled) {
-        return { ...s, showCinematic: 0 };
-      }
-      return s;
-    });
-
     updateSession({ phase: 'active', current_mission_idx: 0 });
-    setState(s => ({ ...s, phase: 'active' as GamePhase, currentMissionIdx: 0, votes: [] }));
+    setState(s => {
+      const base = { ...s, phase: 'active' as GamePhase, currentMissionIdx: 0, votes: [] };
+      if (s.teacherSettings.cinematicsEnabled) {
+        return { ...base, showCinematic: 0 };
+      }
+      // No cinematic → go straight to countdown
+      return { ...base, showCountdown: true };
+    });
   }, [updateSession]);
 
   const nextMission = useCallback(() => {
@@ -331,6 +333,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         phase: 'active' as GamePhase,
         currentMissionIdx: nextIdx,
         showCinematic: shouldShowCinematic ? cinematicWave : null,
+        showCountdown: !shouldShowCinematic, // countdown if no cinematic
       };
     });
   }, [updateSession]);
@@ -393,7 +396,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissCinematic = useCallback(() => {
-    setState(s => ({ ...s, showCinematic: null }));
+    // After cinematic ends, show countdown (except for final cinematic wave 4)
+    setState(s => {
+      if (s.showCinematic === 4) {
+        return { ...s, showCinematic: null };
+      }
+      return { ...s, showCinematic: null, showCountdown: true };
+    });
+  }, []);
+
+  const dismissCountdown = useCallback(() => {
+    setState(s => ({ ...s, showCountdown: false }));
   }, []);
 
   // Final cinematic after last mission
@@ -437,6 +450,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         resetGame,
         updateTeacherSettings,
         dismissCinematic,
+        dismissCountdown,
       }}
     >
       {children}
