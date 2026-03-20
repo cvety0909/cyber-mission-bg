@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Clock, CheckCircle, BookOpen, MessageCircle } from "lucide-react";
 import CyberButton from "./CyberButton";
+import PreGameWaiting from "./PreGameWaiting";
 import { useGame } from "@/context/GameContext";
 
 export default function StudentGame() {
