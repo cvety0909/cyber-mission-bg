@@ -67,7 +67,7 @@ export default function StudentGame() {
             </p>
             <div className="flex flex-col gap-4">
               <CyberButton variant="stop" onClick={() => submitVote("STOP")} className="py-6 text-2xl w-full">
-                🛑 STOP
+                🛑 ОПАСНО
               </CyberButton>
               <CyberButton variant="warn" onClick={() => submitVote("ВНИМАНИЕ")} className="py-6 text-2xl w-full">
                 ⚠️ ВНИМАНИЕ

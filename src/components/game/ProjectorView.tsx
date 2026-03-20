@@ -124,7 +124,7 @@ export default function ProjectorView() {
             </div>
             <p className="text-lg font-body text-foreground/90">{currentMission.explanation}</p>
             <span className="inline-block mt-3 px-4 py-1.5 bg-safe/20 text-safe rounded-lg text-sm font-bold uppercase font-body">
-              Верен отговор: {currentMission.answer}
+              Верен отговор: {currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}
             </span>
           </motion.div>
         )}
