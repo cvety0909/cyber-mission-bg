@@ -56,8 +56,8 @@ function GameRouter() {
         )}
       </AnimatePresence>
 
-      {/* Main view */}
-      {(() => {
+      {/* Main view — hidden while cinematic plays */}
+      {showCinematic === null && (() => {
         switch (view) {
           case "landing": return <LandingScreen />;
           case "join-session": return <JoinSession />;
