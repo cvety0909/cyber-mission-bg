@@ -9,6 +9,7 @@ import TeacherDashboard from "@/components/game/TeacherDashboard";
 import ProjectorView from "@/components/game/ProjectorView";
 import FinalScreen from "@/components/game/FinalScreen";
 import CinematicScene from "@/components/game/CinematicScene";
+import CountdownScreen from "@/components/game/CountdownScreen";
 import WaveBackground from "@/components/game/WaveBackground";
 
 const CINEMATIC_LINES: Record<number, [string, string]> = {
@@ -35,20 +36,20 @@ const CINEMATIC_LINES: Record<number, [string, string]> = {
 };
 
 function GameRouter() {
-  const { view, showCinematic, dismissCinematic, currentMissionIdx, phase } = useGame();
+  const { view, showCinematic, showCountdown, dismissCinematic, dismissCountdown, currentMissionIdx, phase } = useGame();
 
+  const isOverlayActive = showCinematic !== null || showCountdown;
   const showWaveBg = phase !== "waiting" && view !== "landing" && view !== "join-session" && view !== "team-select" && view !== "mission-manager";
 
   return (
     <>
-      {/* Wave background on active game views */}
       {showWaveBg && <WaveBackground missionIdx={currentMissionIdx} />}
 
       {/* Cinematic overlay */}
       <AnimatePresence>
         {showCinematic !== null && CINEMATIC_LINES[showCinematic] && (
           <CinematicScene
-            key={showCinematic}
+            key={`cine-${showCinematic}`}
             lines={CINEMATIC_LINES[showCinematic]}
             waveIndex={showCinematic}
             onComplete={dismissCinematic}
@@ -56,8 +57,15 @@ function GameRouter() {
         )}
       </AnimatePresence>
 
-      {/* Main view — hidden while cinematic plays */}
-      {showCinematic === null && (() => {
+      {/* Countdown overlay */}
+      <AnimatePresence>
+        {showCountdown && showCinematic === null && (
+          <CountdownScreen key="countdown" onComplete={dismissCountdown} />
+        )}
+      </AnimatePresence>
+
+      {/* Main view — hidden while cinematic or countdown plays */}
+      {!isOverlayActive && (() => {
         switch (view) {
           case "landing": return <LandingScreen />;
           case "join-session": return <JoinSession />;

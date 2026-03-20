@@ -449,6 +449,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         resetGame,
         updateTeacherSettings,
         dismissCinematic,
+        dismissCountdown,
       }}
     >
       {children}
