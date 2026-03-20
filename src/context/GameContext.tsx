@@ -304,16 +304,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.selectedTeam, state.currentMissionIdx]);
 
   const startGame = useCallback(() => {
-    // Show intro cinematic if enabled
-    setState(s => {
-      if (s.teacherSettings.cinematicsEnabled) {
-        return { ...s, showCinematic: 0 };
-      }
-      return s;
-    });
-
     updateSession({ phase: 'active', current_mission_idx: 0 });
-    setState(s => ({ ...s, phase: 'active' as GamePhase, currentMissionIdx: 0, votes: [] }));
+    setState(s => {
+      const base = { ...s, phase: 'active' as GamePhase, currentMissionIdx: 0, votes: [] };
+      if (s.teacherSettings.cinematicsEnabled) {
+        return { ...base, showCinematic: 0 };
+      }
+      // No cinematic → go straight to countdown
+      return { ...base, showCountdown: true };
+    });
   }, [updateSession]);
 
   const nextMission = useCallback(() => {
