@@ -158,7 +158,7 @@ export default function MissionManager() {
               <div className="flex-grow min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-display font-bold text-sm text-foreground truncate">{m.title}</span>
-                  <span className={`text-xs font-bold uppercase font-body ${answerColor(m.answer)}`}>{m.answer}</span>
+                  <span className={`text-xs font-bold uppercase font-body ${answerColor(m.answer)}`}>{m.answer === "STOP" ? "ОПАСНО" : m.answer}</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-body uppercase">
                     {m.difficulty === "quick" ? "бърза" : "дискусия"}
                   </span>
