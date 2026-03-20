@@ -395,7 +395,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissCinematic = useCallback(() => {
-    setState(s => ({ ...s, showCinematic: null }));
+    // After cinematic ends, show countdown (except for final cinematic wave 4)
+    setState(s => {
+      if (s.showCinematic === 4) {
+        return { ...s, showCinematic: null };
+      }
+      return { ...s, showCinematic: null, showCountdown: true };
+    });
+  }, []);
+
+  const dismissCountdown = useCallback(() => {
+    setState(s => ({ ...s, showCountdown: false }));
   }, []);
 
   // Final cinematic after last mission
