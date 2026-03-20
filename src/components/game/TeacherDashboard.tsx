@@ -258,7 +258,7 @@ export default function TeacherDashboard() {
                       <Check className="w-4 h-4 text-safe" />
                       <span className="font-display font-bold uppercase text-safe text-sm tracking-widest">Верен отговор</span>
                     </div>
-                    <p className="text-2xl font-display font-black text-safe">{currentMission.answer}</p>
+                    <p className="text-2xl font-display font-black text-safe">{currentMission.answer === "STOP" ? "ОПАСНО" : currentMission.answer}</p>
                   </motion.div>
                 )}
 
