@@ -96,6 +96,7 @@ const INITIAL_STATE: GameState = {
   missions: DEFAULT_MISSIONS,
   teacherSettings: { cinematicsEnabled: true, musicEnabled: false },
   showCinematic: null,
+  showCountdown: false,
 };
 
 // Which cinematic to show at which mission boundary
