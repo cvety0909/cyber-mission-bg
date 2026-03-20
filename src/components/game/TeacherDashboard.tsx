@@ -350,7 +350,7 @@ export default function TeacherDashboard() {
                           <div className="text-xs font-display font-black">{voted ? "ГОТОВ" : "МИСЛИ..."}</div>
                           {voted && (phase === "revealed" || phase === "explained" || phase === "discussion") && (
                             <div className={`text-[10px] mt-1 font-body ${voted.answer === currentMission.answer ? "text-safe" : "text-destructive"}`}>
-                              {voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
+                              {voted.answer === "STOP" ? "ОПАСНО" : voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
                             </div>
                           )}
                         </motion.div>
