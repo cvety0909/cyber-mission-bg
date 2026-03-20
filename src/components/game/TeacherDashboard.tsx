@@ -146,185 +146,223 @@ export default function TeacherDashboard() {
 
       {/* Main */}
       <div className="lg:col-span-9 p-6 lg:p-10 flex flex-col grid-bg">
-        {/* Top bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="text-primary font-bold tracking-widest uppercase text-sm font-body">
-                Мисия {currentMissionIdx + 1} от {totalMissions}
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-secondary text-muted-foreground font-body uppercase">
-                {difficultyLabel} ({pointsLabel})
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-secondary text-muted-foreground font-body">
-                {currentMission.category}
-              </span>
-            </div>
-            <h1 className="text-3xl lg:text-4xl font-display font-black uppercase tracking-tight text-foreground">
-              {currentMission.title}
-            </h1>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {phase === "waiting" && (
+        {phase === "waiting" ? (
+          /* Pre-game preparation screen */
+          <div className="flex-grow flex items-center justify-center">
+            <div className="text-center max-w-lg px-6">
+              <motion.div
+                className="mx-auto mb-8 w-28 h-28 rounded-full flex items-center justify-center"
+                style={{
+                  background: "radial-gradient(circle, hsla(var(--primary) / 0.12) 0%, transparent 70%)",
+                }}
+                animate={{ scale: [1, 1.06, 1], opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Shield className="w-14 h-14 text-primary" />
+              </motion.div>
+
+              <motion.h1
+                className="text-3xl lg:text-4xl font-display font-black uppercase tracking-tight text-foreground mb-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                Подгответе се за мисията
+              </motion.h1>
+
+              <motion.p
+                className="text-lg text-muted-foreground font-body mb-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                Учителят ще стартира играта след малко.
+              </motion.p>
+
               <CyberButton onClick={startGame} className="text-sm py-3">
                 <Play className="w-4 h-4 mr-2 inline" /> Старт на играта
               </CyberButton>
-            )}
-            {phase === "active" && (
-              <CyberButton variant="ghost" onClick={revealAnswers} className="text-sm py-3">
-                <Eye className="w-4 h-4 mr-2 inline" /> Покажи отговорите
-              </CyberButton>
-            )}
-            {phase === "revealed" && (
-              <CyberButton variant="ghost" onClick={showExplanation} className="text-sm py-3">
-                <BookOpen className="w-4 h-4 mr-2 inline" /> Покажи обяснение
-              </CyberButton>
-            )}
-            {phase === "explained" && currentMission.discussionQuestion && (
-              <CyberButton variant="ghost" onClick={showDiscussion} className="text-sm py-3">
-                <MessageCircle className="w-4 h-4 mr-2 inline" /> Покажи дискусия
-              </CyberButton>
-            )}
-            {(phase === "revealed" || phase === "explained" || phase === "discussion") && (
-              <CyberButton onClick={nextMission} className="text-sm py-3">
-                Следваща <ChevronRight className="w-4 h-4 ml-1 inline" />
-              </CyberButton>
-            )}
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="w-full h-1 bg-secondary rounded-full mb-8">
-          <motion.div
-            className="h-full bg-primary rounded-full"
-            initial={false}
-            animate={{ width: `${((currentMissionIdx + 1) / totalMissions) * 100}%` }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-grow">
-          {/* Scenario */}
-          <div className="cyber-surface-deep p-8 lg:p-10 relative overflow-hidden">
-            <div className="absolute top-4 right-4 opacity-5">
-              <Shield size={120} />
             </div>
-            <p className="text-2xl lg:text-3xl leading-relaxed font-body text-foreground relative z-10">
-              "{currentMission.scenario}"
-            </p>
-
-            {(phase === "revealed") && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 p-5 rounded-xl bg-safe/10 border border-safe/20 relative z-10"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Check className="w-4 h-4 text-safe" />
-                  <span className="font-display font-bold uppercase text-safe text-sm tracking-widest">Верен отговор</span>
-                </div>
-                <p className="text-2xl font-display font-black text-safe">{currentMission.answer}</p>
-              </motion.div>
-            )}
-
-            {phase === "explained" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 p-5 rounded-xl bg-primary/10 border border-primary/20 relative z-10"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <BookOpen className="w-4 h-4 text-primary" />
-                  <span className="font-display font-bold uppercase text-primary text-sm tracking-widest">Обяснение</span>
-                </div>
-                <p className="text-secondary-foreground leading-relaxed font-body">{currentMission.explanation}</p>
-                <div className="mt-3 inline-block px-3 py-1 rounded-md bg-safe/20 text-safe text-xs font-bold uppercase font-body">
-                  Верен отговор: {currentMission.answer}
-                </div>
-              </motion.div>
-            )}
-
-            {phase === "discussion" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-8 p-5 rounded-xl bg-warn/10 border border-warn/20 relative z-10"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageCircle className="w-4 h-4 text-warn" />
-                  <span className="font-display font-bold uppercase text-warn text-sm tracking-widest">Въпрос за дискусия</span>
-                </div>
-                <p className="text-foreground leading-relaxed font-body text-lg">{currentMission.discussionQuestion || "Няма въпрос за дискусия."}</p>
-              </motion.div>
-            )}
           </div>
+        ) : (
+          <>
+            {/* Top bar */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="text-primary font-bold tracking-widest uppercase text-sm font-body">
+                    Мисия {currentMissionIdx + 1} от {totalMissions}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-secondary text-muted-foreground font-body uppercase">
+                    {difficultyLabel} ({pointsLabel})
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-secondary text-muted-foreground font-body">
+                    {currentMission.category}
+                  </span>
+                </div>
+                <h1 className="text-3xl lg:text-4xl font-display font-black uppercase tracking-tight text-foreground">
+                  {currentMission.title}
+                </h1>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {phase === "active" && (
+                  <CyberButton variant="ghost" onClick={revealAnswers} className="text-sm py-3">
+                    <Eye className="w-4 h-4 mr-2 inline" /> Покажи отговорите
+                  </CyberButton>
+                )}
+                {phase === "revealed" && (
+                  <CyberButton variant="ghost" onClick={showExplanation} className="text-sm py-3">
+                    <BookOpen className="w-4 h-4 mr-2 inline" /> Покажи обяснение
+                  </CyberButton>
+                )}
+                {phase === "explained" && currentMission.discussionQuestion && (
+                  <CyberButton variant="ghost" onClick={showDiscussion} className="text-sm py-3">
+                    <MessageCircle className="w-4 h-4 mr-2 inline" /> Покажи дискусия
+                  </CyberButton>
+                )}
+                {(phase === "revealed" || phase === "explained" || phase === "discussion") && (
+                  <CyberButton onClick={nextMission} className="text-sm py-3">
+                    Следваща <ChevronRight className="w-4 h-4 ml-1 inline" />
+                  </CyberButton>
+                )}
+              </div>
+            </div>
 
-          {/* Stats */}
-          <div className="flex flex-col gap-4">
-            <div className="cyber-surface p-6 lg:p-8">
-              <h3 className="text-muted-foreground font-bold uppercase text-xs tracking-widest mb-5 font-body">
-                Гласове в реално време
-              </h3>
-              <div className="space-y-3">
-                {(["STOP", "ВНИМАНИЕ", "БЕЗОПАСНО"] as const).map((type) => {
-                  const count = getVoteCount(type);
-                  const colorClass = type === "STOP" ? "bg-destructive" : type === "ВНИМАНИЕ" ? "bg-warn" : "bg-safe";
-                  const isCorrect = (phase === "revealed" || phase === "explained" || phase === "discussion") && currentMission.answer === type;
+            {/* Progress bar */}
+            <div className="w-full h-1 bg-secondary rounded-full mb-8">
+              <motion.div
+                className="h-full bg-primary rounded-full"
+                initial={false}
+                animate={{ width: `${((currentMissionIdx + 1) / totalMissions) * 100}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
 
-                  return (
-                    <div
-                      key={type}
-                      className={`relative h-14 rounded-xl bg-secondary overflow-hidden transition-all ${
-                        isCorrect ? "ring-2 ring-safe shadow-[0_0_15px_hsla(142,71%,45%,0.3)]" : ""
-                      }`}
-                    >
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((count / 4) * 100, 100)}%` }}
-                        className={`absolute inset-0 opacity-20 ${colorClass}`}
-                      />
-                      <div className="absolute inset-0 flex justify-between items-center px-5">
-                        <span className="font-display font-black uppercase tracking-wider text-sm text-foreground">{type}</span>
-                        <span className="text-xl font-display font-black text-foreground">{count}</span>
-                      </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-grow">
+              {/* Scenario */}
+              <div className="cyber-surface-deep p-8 lg:p-10 relative overflow-hidden">
+                <div className="absolute top-4 right-4 opacity-5">
+                  <Shield size={120} />
+                </div>
+                <p className="text-2xl lg:text-3xl leading-relaxed font-body text-foreground relative z-10">
+                  "{currentMission.scenario}"
+                </p>
+
+                {(phase === "revealed") && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-8 p-5 rounded-xl bg-safe/10 border border-safe/20 relative z-10"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Check className="w-4 h-4 text-safe" />
+                      <span className="font-display font-bold uppercase text-safe text-sm tracking-widest">Верен отговор</span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                    <p className="text-2xl font-display font-black text-safe">{currentMission.answer}</p>
+                  </motion.div>
+                )}
 
-            <div className="cyber-surface p-6 lg:p-8 flex-grow">
-              <h3 className="text-muted-foreground font-bold uppercase text-xs tracking-widest mb-4 font-body">
-                Статус на отборите
-              </h3>
-              <div className="flex gap-3">
-                {[1, 2, 3, 4].map((num) => {
-                  const voted = getTeamVote(num);
-                  return (
-                    <motion.div
-                      key={num}
-                      animate={voted ? { boxShadow: "0 0 12px hsla(199,89%,48%,0.2)" } : { boxShadow: "none" }}
-                      className={`flex-1 p-4 rounded-xl transition-all ${
-                        voted
-                          ? "bg-primary/10 ring-1 ring-primary/30 text-primary"
-                          : "bg-secondary text-muted-foreground"
-                      }`}
-                    >
-                      <div className="text-[10px] font-bold uppercase mb-1 font-body">{teamNames[num] || `Отбор ${num}`}</div>
-                      <div className="text-xs font-display font-black">{voted ? "ГОТОВ" : "МИСЛИ..."}</div>
-                      {voted && (phase === "revealed" || phase === "explained" || phase === "discussion") && (
-                        <div className={`text-[10px] mt-1 font-body ${voted.answer === currentMission.answer ? "text-safe" : "text-destructive"}`}>
-                          {voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
+                {phase === "explained" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-8 p-5 rounded-xl bg-primary/10 border border-primary/20 relative z-10"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                      <span className="font-display font-bold uppercase text-primary text-sm tracking-widest">Обяснение</span>
+                    </div>
+                    <p className="text-secondary-foreground leading-relaxed font-body">{currentMission.explanation}</p>
+                    <div className="mt-3 inline-block px-3 py-1 rounded-md bg-safe/20 text-safe text-xs font-bold uppercase font-body">
+                      Верен отговор: {currentMission.answer}
+                    </div>
+                  </motion.div>
+                )}
+
+                {phase === "discussion" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-8 p-5 rounded-xl bg-warn/10 border border-warn/20 relative z-10"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageCircle className="w-4 h-4 text-warn" />
+                      <span className="font-display font-bold uppercase text-warn text-sm tracking-widest">Въпрос за дискусия</span>
+                    </div>
+                    <p className="text-foreground leading-relaxed font-body text-lg">{currentMission.discussionQuestion || "Няма въпрос за дискусия."}</p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="flex flex-col gap-4">
+                <div className="cyber-surface p-6 lg:p-8">
+                  <h3 className="text-muted-foreground font-bold uppercase text-xs tracking-widest mb-5 font-body">
+                    Гласове в реално време
+                  </h3>
+                  <div className="space-y-3">
+                    {(["STOP", "ВНИМАНИЕ", "БЕЗОПАСНО"] as const).map((type) => {
+                      const count = getVoteCount(type);
+                      const colorClass = type === "STOP" ? "bg-destructive" : type === "ВНИМАНИЕ" ? "bg-warn" : "bg-safe";
+                      const isCorrect = (phase === "revealed" || phase === "explained" || phase === "discussion") && currentMission.answer === type;
+
+                      return (
+                        <div
+                          key={type}
+                          className={`relative h-14 rounded-xl bg-secondary overflow-hidden transition-all ${
+                            isCorrect ? "ring-2 ring-safe shadow-[0_0_15px_hsla(142,71%,45%,0.3)]" : ""
+                          }`}
+                        >
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min((count / 4) * 100, 100)}%` }}
+                            className={`absolute inset-0 opacity-20 ${colorClass}`}
+                          />
+                          <div className="absolute inset-0 flex justify-between items-center px-5">
+                            <span className="font-display font-black uppercase tracking-wider text-sm text-foreground">{type}</span>
+                            <span className="text-xl font-display font-black text-foreground">{count}</span>
+                          </div>
                         </div>
-                      )}
-                    </motion.div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="cyber-surface p-6 lg:p-8 flex-grow">
+                  <h3 className="text-muted-foreground font-bold uppercase text-xs tracking-widest mb-4 font-body">
+                    Статус на отборите
+                  </h3>
+                  <div className="flex gap-3">
+                    {[1, 2, 3, 4].map((num) => {
+                      const voted = getTeamVote(num);
+                      return (
+                        <motion.div
+                          key={num}
+                          animate={voted ? { boxShadow: "0 0 12px hsla(199,89%,48%,0.2)" } : { boxShadow: "none" }}
+                          className={`flex-1 p-4 rounded-xl transition-all ${
+                            voted
+                              ? "bg-primary/10 ring-1 ring-primary/30 text-primary"
+                              : "bg-secondary text-muted-foreground"
+                          }`}
+                        >
+                          <div className="text-[10px] font-bold uppercase mb-1 font-body">{teamNames[num] || `Отбор ${num}`}</div>
+                          <div className="text-xs font-display font-black">{voted ? "ГОТОВ" : "МИСЛИ..."}</div>
+                          {voted && (phase === "revealed" || phase === "explained" || phase === "discussion") && (
+                            <div className={`text-[10px] mt-1 font-body ${voted.answer === currentMission.answer ? "text-safe" : "text-destructive"}`}>
+                              {voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
+    </div>
     </div>
   );
 }
