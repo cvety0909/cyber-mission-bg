@@ -34,6 +34,7 @@ interface GameState {
   missions: Mission[];
   teacherSettings: TeacherSettings;
   showCinematic: number | null; // waveIndex 0-4 or null
+  showCountdown: boolean;
 }
 
 interface GameContextType extends GameState {
