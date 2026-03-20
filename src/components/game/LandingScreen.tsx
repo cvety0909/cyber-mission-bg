@@ -26,10 +26,10 @@ export default function LandingScreen() {
           Кибер<span className="text-primary">защитници</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-4 font-body">
-          Мисия: Защити дигиталния свят
+          Вие сте киберзащитниците на дигиталния свят.
         </p>
         <p className="text-sm text-muted-foreground/60 mb-12 max-w-md mx-auto font-body">
-          Интерактивна игра за киберсигурност. Раздели се на отбори, отговаряй на мисии и спечели!
+          Работете в екип, решавайте мисии и вземайте безопасни дигитални решения.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -38,7 +38,7 @@ export default function LandingScreen() {
             className="text-lg"
           >
             <Users className="w-5 h-5 mr-2 inline" />
-            Влез като Ученик
+            Влезте като Ученици
           </CyberButton>
           <CyberButton
             variant="ghost"
