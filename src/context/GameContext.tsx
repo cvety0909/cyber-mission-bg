@@ -221,7 +221,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }, (payload: any) => {
         const v = payload.new;
         setState(s => {
-          // Avoid duplicate votes in state
           const exists = s.votes.some(
             ev => ev.team === v.team && ev.mission_idx === v.mission_idx
           );
@@ -232,22 +231,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           };
         });
       })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'votes',
-        filter: `session_id=eq.${sid}`,
-      }, () => {
-        // Catch-all: refetch votes on any vote event to ensure consistency
-        fetchVotes(sid);
-      })
-      .subscribe((status: string) => {
-        if (status === 'SUBSCRIBED') {
-          // Re-fetch on successful subscription to catch anything missed
-          fetchVotes(sid);
-          fetchSession(sid);
-        }
-      });
+      .subscribe();
 
     // Polling fallback every 5s for school network reliability
     const pollInterval = setInterval(() => {
