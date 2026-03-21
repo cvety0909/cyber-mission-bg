@@ -378,14 +378,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.selectedTeam, state.currentMissionIdx, state.votes]);
 
   const startGame = useCallback(() => {
-    updateSession({ phase: 'active', current_mission_idx: 0 });
     setState(s => {
-      const base = { ...s, phase: 'active' as GamePhase, currentMissionIdx: 0, votes: [] };
+      const base = { ...s, currentMissionIdx: 0, votes: [] };
       if (s.teacherSettings.cinematicsEnabled) {
-        return { ...base, showCinematic: 0 };
+        // Keep DB phase 'waiting' during cinematic — students stay on waiting screen
+        return { ...base, phase: 'active' as GamePhase, showCinematic: 0 };
       }
-      // No cinematic → go straight to countdown
-      return { ...base, showCountdown: true };
+      // No cinematic → show countdown, still keep DB waiting until countdown ends
+      return { ...base, phase: 'active' as GamePhase, showCountdown: true };
     });
   }, [updateSession]);
 
