@@ -7,7 +7,7 @@ export default function LandingScreen() {
   const { setView, setRole } = useGame();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 grid-bg">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 grid-bg overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

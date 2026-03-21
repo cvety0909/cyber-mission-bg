@@ -233,11 +233,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       })
       .subscribe();
 
-    // Polling fallback every 5s for school network reliability
+    // Polling fallback every 10s for school network reliability
     const pollInterval = setInterval(() => {
-      fetchVotes(sid);
       fetchSession(sid);
-    }, 5000);
+    }, 10000);
 
     return () => {
       clearInterval(pollInterval);
