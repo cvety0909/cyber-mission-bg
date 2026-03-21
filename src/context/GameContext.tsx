@@ -43,6 +43,7 @@ interface GameContextType extends GameState {
   currentMission: Mission;
   totalMissions: number;
   currentMissionVotes: Vote[];
+  isTeacherTransitioning: boolean;
   setView: (v: GameView) => void;
   setRole: (r: UserRole) => void;
   selectTeam: (t: number) => void;
