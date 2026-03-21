@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo, ReactNode } from "react";
 import { MISSIONS as DEFAULT_MISSIONS, type AnswerType, type Mission } from "@/data/missions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -119,8 +119,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     sessionIdRef.current = state.sessionId;
   }, [state.sessionId]);
 
-  const currentMissionVotes = state.votes.filter(v => v.mission_idx === state.currentMissionIdx);
-  const hasVoted = state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam);
+  const currentMissionVotes = useMemo(
+    () => state.votes.filter(v => v.mission_idx === state.currentMissionIdx),
+    [state.votes, state.currentMissionIdx]
+  );
+  const hasVoted = useMemo(
+    () => state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam),
+    [state.selectedTeam, currentMissionVotes]
+  );
   const isTeacherTransitioning = state.showCinematic !== null || state.showCountdown;
 
   const getSafeMission = (missions: Mission[], idx: number): Mission => {
@@ -215,7 +221,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }, (payload: any) => {
         const v = payload.new;
         setState(s => {
-          // Avoid duplicate votes in state
           const exists = s.votes.some(
             ev => ev.team === v.team && ev.mission_idx === v.mission_idx
           );
@@ -226,28 +231,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
           };
         });
       })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'votes',
-        filter: `session_id=eq.${sid}`,
-      }, () => {
-        // Catch-all: refetch votes on any vote event to ensure consistency
-        fetchVotes(sid);
-      })
-      .subscribe((status: string) => {
-        if (status === 'SUBSCRIBED') {
-          // Re-fetch on successful subscription to catch anything missed
-          fetchVotes(sid);
-          fetchSession(sid);
-        }
-      });
+      .subscribe();
 
-    // Polling fallback every 5s for school network reliability
+    // Polling fallback every 10s for school network reliability
     const pollInterval = setInterval(() => {
-      fetchVotes(sid);
       fetchSession(sid);
-    }, 5000);
+    }, 10000);
 
     return () => {
       clearInterval(pollInterval);
