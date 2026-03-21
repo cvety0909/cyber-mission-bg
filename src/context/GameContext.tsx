@@ -258,8 +258,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const setView = useCallback((view: GameView) => setState(s => ({ ...s, view })), []);
   const setRole = useCallback((role: UserRole) => setState(s => ({ ...s, role })), []);
 
-  const selectTeam = useCallback((team: number) => {
+  const selectTeam = useCallback(async (team: number) => {
     setState(s => ({ ...s, selectedTeam: team, view: "student-game" }));
+    // Persist team connection to DB
+    const sid = sessionIdRef.current;
+    if (sid) {
+      const { data } = await (supabase as any).from('sessions').select('connected_teams').eq('id', sid).single();
+      const current: number[] = Array.isArray(data?.connected_teams) ? data.connected_teams : [];
+      if (!current.includes(team)) {
+        await (supabase as any).from('sessions').update({ connected_teams: [...current, team] }).eq('id', sid);
+      }
+    }
   }, []);
 
   const updateSession = useCallback(async (updates: Record<string, any>) => {
