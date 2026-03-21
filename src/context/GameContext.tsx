@@ -129,28 +129,57 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const currentMission = getSafeMission(state.missions, state.currentMissionIdx);
   const totalMissions = state.missions?.length || 0;
 
+  // Fetch all votes for the current session
+  const fetchVotes = useCallback(async (sessionId: string) => {
+    const { data } = await (supabase as any).from('votes').select('*').eq('session_id', sessionId);
+    if (data) {
+      setState(s => ({
+        ...s,
+        votes: data.map((v: any) => ({ team: v.team, answer: v.answer as AnswerType, mission_idx: v.mission_idx })),
+      }));
+    }
+  }, []);
+
+  // Fetch latest session state
+  const fetchSession = useCallback(async (sessionId: string) => {
+    const { data } = await (supabase as any).from('sessions').select('*').eq('id', sessionId).single();
+    if (data) {
+      setState(s => {
+        const newPhase = data.phase as GamePhase;
+        let newView = s.view;
+        if (newPhase === 'final' && s.role === 'student') {
+          newView = 'final';
+        }
+        return {
+          ...s,
+          phase: newPhase,
+          currentMissionIdx: data.current_mission_idx,
+          prevScores: { ...s.scores },
+          scores: data.scores,
+          teamNames: data.team_names,
+          missions: data.missions || s.missions,
+          view: newView,
+        };
+      });
+    }
+  }, []);
+
   // Realtime subscription
   useEffect(() => {
     if (!state.sessionId) return;
+    const sid = state.sessionId;
 
-    const fetchVotes = async () => {
-      const { data } = await (supabase as any).from('votes').select('*').eq('session_id', state.sessionId);
-      if (data) {
-        setState(s => ({
-          ...s,
-          votes: data.map((v: any) => ({ team: v.team, answer: v.answer as AnswerType, mission_idx: v.mission_idx })),
-        }));
-      }
-    };
-    fetchVotes();
+    // Initial hydration
+    fetchVotes(sid);
+    fetchSession(sid);
 
     const channel = supabase
-      .channel(`game-${state.sessionId}`)
+      .channel(`game-${sid}`)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'sessions',
-        filter: `id=eq.${state.sessionId}`,
+        filter: `id=eq.${sid}`,
       }, (payload: any) => {
         const d = payload.new;
         setState(s => {
@@ -170,25 +199,56 @@ export function GameProvider({ children }: { children: ReactNode }) {
             view: newView,
           };
         });
+        // Re-fetch votes when mission changes to ensure we have all votes
+        fetchVotes(sid);
       })
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'votes',
-        filter: `session_id=eq.${state.sessionId}`,
+        filter: `session_id=eq.${sid}`,
       }, (payload: any) => {
         const v = payload.new;
-        setState(s => ({
-          ...s,
-          votes: [...s.votes, { team: v.team, answer: v.answer as AnswerType, mission_idx: v.mission_idx }],
-        }));
+        setState(s => {
+          // Avoid duplicate votes in state
+          const exists = s.votes.some(
+            ev => ev.team === v.team && ev.mission_idx === v.mission_idx
+          );
+          if (exists) return s;
+          return {
+            ...s,
+            votes: [...s.votes, { team: v.team, answer: v.answer as AnswerType, mission_idx: v.mission_idx }],
+          };
+        });
       })
-      .subscribe();
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'votes',
+        filter: `session_id=eq.${sid}`,
+      }, () => {
+        // Catch-all: refetch votes on any vote event to ensure consistency
+        fetchVotes(sid);
+      })
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          // Re-fetch on successful subscription to catch anything missed
+          fetchVotes(sid);
+          fetchSession(sid);
+        }
+      });
+
+    // Polling fallback every 5s for school network reliability
+    const pollInterval = setInterval(() => {
+      fetchVotes(sid);
+      fetchSession(sid);
+    }, 5000);
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
-  }, [state.sessionId]);
+  }, [state.sessionId, fetchVotes, fetchSession]);
 
   const setView = useCallback((view: GameView) => setState(s => ({ ...s, view })), []);
   const setRole = useCallback((role: UserRole) => setState(s => ({ ...s, role })), []);
