@@ -43,7 +43,7 @@ export default function StudentGame() {
           </motion.div>
         )}
 
-        {phase === "active" && !hasVoted && (
+        {phase === "active" && !hasVoted && !isTeacherTransitioning && (
           <motion.div
             key="voting"
             initial={{ opacity: 0, y: 20 }}
