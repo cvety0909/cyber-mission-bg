@@ -119,8 +119,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     sessionIdRef.current = state.sessionId;
   }, [state.sessionId]);
 
-  const currentMissionVotes = state.votes.filter(v => v.mission_idx === state.currentMissionIdx);
-  const hasVoted = state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam);
+  const currentMissionVotes = useMemo(
+    () => state.votes.filter(v => v.mission_idx === state.currentMissionIdx),
+    [state.votes, state.currentMissionIdx]
+  );
+  const hasVoted = useMemo(
+    () => state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam),
+    [state.selectedTeam, currentMissionVotes]
+  );
   const isTeacherTransitioning = state.showCinematic !== null || state.showCountdown;
 
   const getSafeMission = (missions: Mission[], idx: number): Mission => {
