@@ -148,7 +148,7 @@ export default function TeacherDashboard() {
       <div className="lg:col-span-9 p-6 lg:p-10 flex flex-col grid-bg">
         {phase === "waiting" ? (
           /* Pre-game preparation screen */
-          <div className="flex-grow flex items-center justify-center">
+          <div className="flex-grow flex flex-col items-center justify-center">
             <div className="text-center max-w-lg px-6">
               <motion.div
                 className="mx-auto mb-8 w-28 h-28 rounded-full flex items-center justify-center"
@@ -182,6 +182,39 @@ export default function TeacherDashboard() {
               <CyberButton onClick={startGame} className="text-sm py-3">
                 <Play className="w-4 h-4 mr-2 inline" /> Старт на играта
               </CyberButton>
+            </div>
+
+            {/* Team connection status */}
+            <div className="mt-10 w-full max-w-xl px-6">
+              <div className="text-center mb-4">
+                <span className="text-sm font-bold text-muted-foreground font-body uppercase tracking-widest">
+                  Свързани отбори: {connectedTeams.length}/4
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[1, 2, 3, 4].map((num) => {
+                  const isConnected = connectedTeams.includes(num);
+                  return (
+                    <motion.div
+                      key={num}
+                      className={`p-4 rounded-xl text-center transition-all ${
+                        isConnected
+                          ? "bg-primary/10 ring-1 ring-primary/30"
+                          : "bg-secondary"
+                      }`}
+                      animate={isConnected ? { boxShadow: ["0 0 0px hsla(var(--primary) / 0)", "0 0 12px hsla(var(--primary) / 0.25)", "0 0 0px hsla(var(--primary) / 0)"] } : {}}
+                      transition={isConnected ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {}}
+                    >
+                      <div className="text-xs font-bold uppercase font-body text-foreground mb-1">
+                        {teamNames[num] || `Отбор ${num}`}
+                      </div>
+                      <div className={`text-[10px] font-bold uppercase font-body ${isConnected ? "text-primary" : "text-muted-foreground"}`}>
+                        {isConnected ? "Свързан" : "Очаква връзка"}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (

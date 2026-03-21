@@ -17,7 +17,7 @@ export default function ProjectorView() {
           onClick={() => setView("teacher-dash")}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Обратно към панела
+          <ArrowLeft className="w-4 h-4" /> {phase === "waiting" ? "Назад към подготовката" : "Обратно към панела"}
         </button>
 
         {/* Scores bar */}
