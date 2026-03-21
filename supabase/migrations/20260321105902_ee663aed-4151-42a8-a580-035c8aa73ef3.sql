@@ -1,0 +1,1 @@
+ALTER TABLE public.sessions ADD COLUMN connected_teams jsonb DEFAULT '[]'::jsonb;
