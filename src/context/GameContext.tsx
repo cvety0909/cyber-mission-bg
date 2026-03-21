@@ -162,6 +162,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           scores: data.scores,
           teamNames: data.team_names,
           missions: data.missions || s.missions,
+          connectedTeams: Array.isArray(data.connected_teams) ? data.connected_teams : s.connectedTeams,
           view: newView,
         };
       });
