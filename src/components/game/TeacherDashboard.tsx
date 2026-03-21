@@ -336,6 +336,9 @@ export default function TeacherDashboard() {
                   <div className="flex gap-3">
                     {[1, 2, 3, 4].map((num) => {
                       const voted = getTeamVote(num);
+                      const isConnected = connectedTeams.includes(num);
+                      const statusLabel = voted ? "Отговори" : isConnected ? "Свързан" : "Очаква връзка";
+                      const statusColor = voted ? "text-safe" : isConnected ? "text-primary" : "text-muted-foreground";
                       return (
                         <motion.div
                           key={num}
@@ -343,11 +346,13 @@ export default function TeacherDashboard() {
                           className={`flex-1 p-4 rounded-xl transition-all ${
                             voted
                               ? "bg-primary/10 ring-1 ring-primary/30 text-primary"
+                              : isConnected
+                              ? "bg-primary/5 ring-1 ring-primary/10 text-foreground"
                               : "bg-secondary text-muted-foreground"
                           }`}
                         >
                           <div className="text-[10px] font-bold uppercase mb-1 font-body">{teamNames[num] || `Отбор ${num}`}</div>
-                          <div className="text-xs font-display font-black">{voted ? "ГОТОВ" : "МИСЛИ..."}</div>
+                          <div className={`text-[10px] font-bold uppercase font-body ${statusColor}`}>{statusLabel}</div>
                           {voted && (phase === "revealed" || phase === "explained" || phase === "discussion") && (
                             <div className={`text-[10px] mt-1 font-body ${voted.answer === currentMission.answer ? "text-safe" : "text-destructive"}`}>
                               {voted.answer === "STOP" ? "ОПАСНО" : voted.answer} {voted.answer === currentMission.answer ? "✓" : "✗"}
