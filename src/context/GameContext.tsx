@@ -480,8 +480,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissCountdown = useCallback(() => {
+    // Now actually set DB phase to 'active' so students see the mission
+    updateSession({ phase: 'active', current_mission_idx: state.currentMissionIdx });
     setState(s => ({ ...s, showCountdown: false }));
-  }, []);
+  }, [updateSession, state.currentMissionIdx]);
 
   // Final cinematic after last mission
   const handleFinalView = useCallback(() => {
