@@ -11,7 +11,7 @@ export default function TeacherDashboard() {
     phase, currentMissionVotes, scores, prevScores, sessionCode, teamNames,
     startGame, nextMission, revealAnswers, showExplanation, showDiscussion,
     awardPoints, renameTeam, resetGame, setView,
-    teacherSettings, updateTeacherSettings,
+    teacherSettings, updateTeacherSettings, connectedTeams,
   } = useGame();
 
   const [editingTeam, setEditingTeam] = useState<number | null>(null);
