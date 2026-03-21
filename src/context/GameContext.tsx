@@ -510,6 +510,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         currentMission,
         totalMissions,
         currentMissionVotes,
+        isTeacherTransitioning,
         setView,
         setRole,
         selectTeam,
