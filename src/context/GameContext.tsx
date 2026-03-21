@@ -83,6 +83,19 @@ const FALLBACK_MISSION: Mission = {
 const INITIAL_SCORES = { 1: 0, 2: 0, 3: 0, 4: 0 };
 const INITIAL_TEAM_NAMES = { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" };
 
+const isSameScores = (a: Record<number, number>, b: Record<number, number>) =>
+  [1, 2, 3, 4].every(team => (a[team] || 0) === (b[team] || 0));
+
+const isSameTeamNames = (a: Record<number, string>, b: Record<number, string>) =>
+  [1, 2, 3, 4].every(team => (a[team] || "") === (b[team] || ""));
+
+const isSameConnectedTeams = (a: number[], b: number[]) =>
+  a.length === b.length && a.every((team, idx) => team === b[idx]);
+
+const isSameVotes = (a: Vote[], b: Vote[]) =>
+  a.length === b.length &&
+  a.every((vote, idx) => vote.team === b[idx].team && vote.answer === b[idx].answer && vote.mission_idx === b[idx].mission_idx);
+
 const INITIAL_STATE: GameState = {
   view: "landing",
   role: null,
@@ -114,6 +127,8 @@ function getCinematicWave(missionIdx: number): number | null {
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>(INITIAL_STATE);
   const sessionIdRef = useRef<string | null>(null);
+  const channelRef = useRef<any>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     sessionIdRef.current = state.sessionId;
@@ -139,50 +154,103 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const currentMission = getSafeMission(state.missions, state.currentMissionIdx);
   const totalMissions = state.missions?.length || 0;
 
+  const applySessionSnapshot = useCallback((data: any) => {
+    setState(s => {
+      const nextPhase = data.phase as GamePhase;
+      const nextMissionIdx = data.current_mission_idx;
+      const nextScores = data.scores ?? s.scores;
+      const nextTeamNames = data.team_names ?? s.teamNames;
+      const nextMissions = Array.isArray(data.missions) && data.missions.length > 0 ? data.missions : s.missions;
+      const nextConnectedTeams = Array.isArray(data.connected_teams) ? data.connected_teams : s.connectedTeams;
+      const scoresChanged = !isSameScores(s.scores, nextScores);
+
+      let nextView = s.view;
+      if (nextPhase === "final" && s.role === "student") {
+        nextView = "final";
+      }
+
+      const hasAnyChange =
+        s.phase !== nextPhase ||
+        s.currentMissionIdx !== nextMissionIdx ||
+        scoresChanged ||
+        !isSameTeamNames(s.teamNames, nextTeamNames) ||
+        !isSameConnectedTeams(s.connectedTeams, nextConnectedTeams) ||
+        s.missions !== nextMissions ||
+        s.view !== nextView;
+
+      if (!hasAnyChange) return s;
+
+      return {
+        ...s,
+        phase: nextPhase,
+        currentMissionIdx: nextMissionIdx,
+        prevScores: scoresChanged ? { ...s.scores } : s.prevScores,
+        scores: nextScores,
+        teamNames: nextTeamNames,
+        missions: nextMissions,
+        connectedTeams: nextConnectedTeams,
+        view: nextView,
+      };
+    });
+  }, []);
+
+  const cleanupRealtime = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+  }, []);
+
   // Fetch all votes for the current session
   const fetchVotes = useCallback(async (sessionId: string) => {
-    const { data } = await (supabase as any).from('votes').select('*').eq('session_id', sessionId);
-    if (data) {
-      setState(s => ({
-        ...s,
-        votes: data.map((v: any) => ({ team: v.team, answer: v.answer as AnswerType, mission_idx: v.mission_idx })),
-      }));
-    }
+    const { data } = await (supabase as any)
+      .from('votes')
+      .select('team,answer,mission_idx,created_at')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true });
+
+    if (!data || sessionIdRef.current !== sessionId) return;
+
+    const incomingVotes: Vote[] = data.map((v: any) => ({
+      team: v.team,
+      answer: v.answer as AnswerType,
+      mission_idx: v.mission_idx,
+    }));
+
+    setState(s => {
+      if (isSameVotes(s.votes, incomingVotes)) return s;
+      return { ...s, votes: incomingVotes };
+    });
   }, []);
 
   // Fetch latest session state
   const fetchSession = useCallback(async (sessionId: string) => {
     const { data } = await (supabase as any).from('sessions').select('*').eq('id', sessionId).single();
-    if (data) {
-      setState(s => {
-        const newPhase = data.phase as GamePhase;
-        let newView = s.view;
-        if (newPhase === 'final' && s.role === 'student') {
-          newView = 'final';
-        }
-        return {
-          ...s,
-          phase: newPhase,
-          currentMissionIdx: data.current_mission_idx,
-          prevScores: { ...s.scores },
-          scores: data.scores,
-          teamNames: data.team_names,
-          missions: data.missions || s.missions,
-          connectedTeams: Array.isArray(data.connected_teams) ? data.connected_teams : s.connectedTeams,
-          view: newView,
-        };
-      });
-    }
-  }, []);
+    if (!data || sessionIdRef.current !== sessionId) return;
+    applySessionSnapshot(data);
+  }, [applySessionSnapshot]);
 
   // Realtime subscription
   useEffect(() => {
-    if (!state.sessionId) return;
+    if (!state.sessionId) {
+      cleanupRealtime();
+      return;
+    }
     const sid = state.sessionId;
+    let isStale = false;
+
+    cleanupRealtime();
+
+    const hydrateLiveState = async () => {
+      await Promise.all([fetchSession(sid), fetchVotes(sid)]);
+    };
 
     // Initial hydration
-    fetchVotes(sid);
-    fetchSession(sid);
+    void hydrateLiveState();
 
     const channel = supabase
       .channel(`game-${sid}`)
@@ -192,26 +260,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         table: 'sessions',
         filter: `id=eq.${sid}`,
       }, (payload: any) => {
-        const d = payload.new;
-        setState(s => {
-          const newPhase = d.phase as GamePhase;
-          let newView = s.view;
-          if (newPhase === 'final' && s.role === 'student') {
-            newView = 'final';
-          }
-          return {
-            ...s,
-            phase: newPhase,
-            currentMissionIdx: d.current_mission_idx,
-            prevScores: { ...s.scores },
-            scores: d.scores,
-            teamNames: d.team_names,
-            missions: d.missions || s.missions,
-            view: newView,
-          };
-        });
-        // Re-fetch votes when mission changes to ensure we have all votes
-        fetchVotes(sid);
+        if (isStale || sessionIdRef.current !== sid) return;
+        const nextSession = payload.new;
+        if (!nextSession) return;
+        applySessionSnapshot(nextSession);
       })
       .on('postgres_changes', {
         event: 'INSERT',
@@ -219,6 +271,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         table: 'votes',
         filter: `session_id=eq.${sid}`,
       }, (payload: any) => {
+        if (isStale || sessionIdRef.current !== sid) return;
         const v = payload.new;
         setState(s => {
           const exists = s.votes.some(
@@ -231,18 +284,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
           };
         });
       })
-      .subscribe();
+      .subscribe((status: string) => {
+        if (isStale || sessionIdRef.current !== sid) return;
+        if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          void hydrateLiveState();
+        }
+      });
 
-    // Polling fallback every 10s for school network reliability
-    const pollInterval = setInterval(() => {
-      fetchSession(sid);
-    }, 10000);
+    channelRef.current = channel;
+
+    // Short fallback polling for unstable school networks
+    pollIntervalRef.current = setInterval(() => {
+      if (sessionIdRef.current !== sid) return;
+      void hydrateLiveState();
+    }, 2500);
 
     return () => {
-      clearInterval(pollInterval);
-      supabase.removeChannel(channel);
+      isStale = true;
+      cleanupRealtime();
     };
-  }, [state.sessionId, fetchVotes, fetchSession]);
+  }, [state.sessionId, fetchVotes, fetchSession, applySessionSnapshot, cleanupRealtime]);
 
   const setView = useCallback((view: GameView) => setState(s => ({ ...s, view })), []);
   const setRole = useCallback((role: UserRole) => setState(s => ({ ...s, role })), []);
@@ -327,6 +388,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       prevScores: data.scores,
       teamNames: data.team_names,
       missions: data.missions || DEFAULT_MISSIONS,
+      connectedTeams: Array.isArray(data.connected_teams) ? data.connected_teams : [],
       view: 'team-select',
       role: 'student',
     }));
