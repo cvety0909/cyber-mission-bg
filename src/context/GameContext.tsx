@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo, ReactNode } from "react";
 import { MISSIONS as DEFAULT_MISSIONS, type AnswerType, type Mission } from "@/data/missions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
