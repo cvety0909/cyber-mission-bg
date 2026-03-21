@@ -401,13 +401,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const cinematicWave = getCinematicWave(nextIdx);
       const shouldShowCinematic = cinematicWave !== null && s.teacherSettings.cinematicsEnabled;
 
+      if (shouldShowCinematic) {
+        // Don't update DB yet — wait for cinematic+countdown to finish
+        return {
+          ...s,
+          phase: 'active' as GamePhase,
+          currentMissionIdx: nextIdx,
+          showCinematic: cinematicWave,
+          showCountdown: false,
+        };
+      }
+
+      // No cinematic — update DB immediately
       updateSession({ phase: 'active', current_mission_idx: nextIdx });
       return {
         ...s,
         phase: 'active' as GamePhase,
         currentMissionIdx: nextIdx,
-        showCinematic: shouldShowCinematic ? cinematicWave : null,
-        showCountdown: false, // countdown only after cinematics
+        showCinematic: null,
+        showCountdown: false,
       };
     });
   }, [updateSession]);
