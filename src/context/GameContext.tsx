@@ -332,24 +332,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const submitVote = useCallback(async (answer: AnswerType) => {
-    if (!sessionIdRef.current) return;
+    const sid = sessionIdRef.current;
+    if (!sid) return;
 
-    setState(s => {
-      if (s.selectedTeam === null) return s;
-      const alreadyVoted = s.votes.some(v => v.mission_idx === s.currentMissionIdx && v.team === s.selectedTeam);
-      if (alreadyVoted) return s;
+    const team = state.selectedTeam;
+    const missionIdx = state.currentMissionIdx;
+    if (team === null) return;
 
-      const newVote: Vote = { team: s.selectedTeam, answer, mission_idx: s.currentMissionIdx };
-      return { ...s, votes: [...s.votes, newVote] };
-    });
+    // Optimistic local update
+    const alreadyVoted = state.votes.some(v => v.mission_idx === missionIdx && v.team === team);
+    if (alreadyVoted) return;
 
-    const currentState = state;
-    if (currentState.selectedTeam === null) return;
+    const newVote: Vote = { team, answer, mission_idx: missionIdx };
+    setState(s => ({ ...s, votes: [...s.votes, newVote] }));
 
     const { error } = await (supabase as any).from('votes').insert({
-      session_id: sessionIdRef.current,
-      mission_idx: currentState.currentMissionIdx,
-      team: currentState.selectedTeam,
+      session_id: sid,
+      mission_idx: missionIdx,
+      team,
       answer,
     });
 
@@ -361,7 +361,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         console.error(error);
       }
     }
-  }, [state.selectedTeam, state.currentMissionIdx]);
+  }, [state.selectedTeam, state.currentMissionIdx, state.votes]);
 
   const startGame = useCallback(() => {
     updateSession({ phase: 'active', current_mission_idx: 0 });
