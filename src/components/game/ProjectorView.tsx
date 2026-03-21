@@ -145,7 +145,19 @@ export default function ProjectorView() {
           </motion.div>
         )}
 
-        {phase === "waiting" && <PreGameWaiting />}
+        {phase === "waiting" && (
+          <div className="relative">
+            <PreGameWaiting />
+            <div className="fixed top-6 left-6 z-[60]">
+              <button
+                onClick={() => setView("teacher-dash")}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/80 backdrop-blur border border-border text-muted-foreground hover:text-foreground transition-colors text-sm font-body"
+              >
+                <ArrowLeft className="w-4 h-4" /> Назад към подготовката
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
