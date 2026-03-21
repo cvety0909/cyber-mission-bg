@@ -32,7 +32,7 @@ export default function StudentGame() {
       </div>
 
       <AnimatePresence mode="wait">
-        {phase === "waiting" && (
+        {(phase === "waiting" || (phase === "active" && isTeacherTransitioning)) && (
           <motion.div
             key="waiting"
             initial={{ opacity: 0 }}
