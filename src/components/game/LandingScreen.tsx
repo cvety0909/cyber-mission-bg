@@ -22,13 +22,13 @@ export default function LandingScreen() {
           <Shield className="w-24 h-24 text-primary mx-auto drop-shadow-[0_0_25px_hsla(199,89%,48%,0.6)]" />
         </motion.div>
 
-        <h1 className="text-5xl md:text-7xl font-display font-black mb-4 tracking-tighter uppercase italic text-foreground">
+        <h1 className="text-3xl sm:text-5xl md:text-7xl font-display font-black mb-4 tracking-tighter uppercase italic text-foreground px-2">
           Кибер<span className="text-primary">защитници</span>
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground mb-4 font-body">
+        <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-4 font-body px-2">
           Вие сте киберзащитниците на дигиталния свят.
         </p>
-        <p className="text-sm text-muted-foreground/60 mb-12 max-w-md mx-auto font-body">
+        <p className="text-xs sm:text-sm text-muted-foreground/60 mb-8 sm:mb-12 max-w-md mx-auto font-body px-4">
           Работете в екип, решавайте мисии и вземайте безопасни дигитални решения.
         </p>
 
