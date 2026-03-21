@@ -5,7 +5,7 @@ import PreGameWaiting from "./PreGameWaiting";
 import { useGame } from "@/context/GameContext";
 
 export default function StudentGame() {
-  const { selectedTeam, teamNames, phase, currentMission, currentMissionIdx, totalMissions, hasVoted, submitVote, sessionCode } = useGame();
+  const { selectedTeam, teamNames, phase, currentMission, currentMissionIdx, totalMissions, hasVoted, submitVote, sessionCode, isTeacherTransitioning } = useGame();
 
   const difficultyLabel = currentMission.difficulty === "discussion" ? "Дискусия" : "Бърза";
 
