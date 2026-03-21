@@ -35,6 +35,7 @@ interface GameState {
   teacherSettings: TeacherSettings;
   showCinematic: number | null; // waveIndex 0-4 or null
   showCountdown: boolean;
+  connectedTeams: number[];
 }
 
 interface GameContextType extends GameState {
