@@ -100,6 +100,7 @@ const INITIAL_STATE: GameState = {
   teacherSettings: { cinematicsEnabled: true, musicEnabled: false },
   showCinematic: null,
   showCountdown: false,
+  connectedTeams: [],
 };
 
 // Which cinematic to show at which mission boundary
