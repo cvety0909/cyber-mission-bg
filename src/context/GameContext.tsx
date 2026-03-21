@@ -121,6 +121,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const currentMissionVotes = state.votes.filter(v => v.mission_idx === state.currentMissionIdx);
   const hasVoted = state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam);
+  const isTeacherTransitioning = state.showCinematic !== null || state.showCountdown;
 
   const getSafeMission = (missions: Mission[], idx: number): Mission => {
     if (!missions || missions.length === 0) return FALLBACK_MISSION;
