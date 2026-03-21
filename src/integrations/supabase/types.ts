@@ -17,6 +17,7 @@ export type Database = {
       sessions: {
         Row: {
           code: string
+          connected_teams: Json | null
           created_at: string
           current_mission_idx: number
           id: string
@@ -29,6 +30,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          connected_teams?: Json | null
           created_at?: string
           current_mission_idx?: number
           id?: string
@@ -41,6 +43,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          connected_teams?: Json | null
           created_at?: string
           current_mission_idx?: number
           id?: string

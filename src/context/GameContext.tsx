@@ -35,6 +35,7 @@ interface GameState {
   teacherSettings: TeacherSettings;
   showCinematic: number | null; // waveIndex 0-4 or null
   showCountdown: boolean;
+  connectedTeams: number[];
 }
 
 interface GameContextType extends GameState {
@@ -42,6 +43,7 @@ interface GameContextType extends GameState {
   currentMission: Mission;
   totalMissions: number;
   currentMissionVotes: Vote[];
+  isTeacherTransitioning: boolean;
   setView: (v: GameView) => void;
   setRole: (r: UserRole) => void;
   selectTeam: (t: number) => void;
@@ -98,6 +100,7 @@ const INITIAL_STATE: GameState = {
   teacherSettings: { cinematicsEnabled: true, musicEnabled: false },
   showCinematic: null,
   showCountdown: false,
+  connectedTeams: [],
 };
 
 // Which cinematic to show at which mission boundary
@@ -118,6 +121,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const currentMissionVotes = state.votes.filter(v => v.mission_idx === state.currentMissionIdx);
   const hasVoted = state.selectedTeam !== null && currentMissionVotes.some(v => v.team === state.selectedTeam);
+  const isTeacherTransitioning = state.showCinematic !== null || state.showCountdown;
 
   const getSafeMission = (missions: Mission[], idx: number): Mission => {
     if (!missions || missions.length === 0) return FALLBACK_MISSION;
@@ -158,6 +162,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           scores: data.scores,
           teamNames: data.team_names,
           missions: data.missions || s.missions,
+          connectedTeams: Array.isArray(data.connected_teams) ? data.connected_teams : s.connectedTeams,
           view: newView,
         };
       });
@@ -253,8 +258,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const setView = useCallback((view: GameView) => setState(s => ({ ...s, view })), []);
   const setRole = useCallback((role: UserRole) => setState(s => ({ ...s, role })), []);
 
-  const selectTeam = useCallback((team: number) => {
+  const selectTeam = useCallback(async (team: number) => {
     setState(s => ({ ...s, selectedTeam: team, view: "student-game" }));
+    // Persist team connection to DB
+    const sid = sessionIdRef.current;
+    if (sid) {
+      const { data } = await (supabase as any).from('sessions').select('connected_teams').eq('id', sid).single();
+      const current: number[] = Array.isArray(data?.connected_teams) ? data.connected_teams : [];
+      if (!current.includes(team)) {
+        await (supabase as any).from('sessions').update({ connected_teams: [...current, team] }).eq('id', sid);
+      }
+    }
   }, []);
 
   const updateSession = useCallback(async (updates: Record<string, any>) => {
@@ -364,14 +378,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.selectedTeam, state.currentMissionIdx, state.votes]);
 
   const startGame = useCallback(() => {
-    updateSession({ phase: 'active', current_mission_idx: 0 });
     setState(s => {
-      const base = { ...s, phase: 'active' as GamePhase, currentMissionIdx: 0, votes: [] };
+      const base = { ...s, currentMissionIdx: 0, votes: [] };
       if (s.teacherSettings.cinematicsEnabled) {
-        return { ...base, showCinematic: 0 };
+        // Keep DB phase 'waiting' during cinematic — students stay on waiting screen
+        return { ...base, phase: 'active' as GamePhase, showCinematic: 0 };
       }
-      // No cinematic → go straight to countdown
-      return { ...base, showCountdown: true };
+      // No cinematic → show countdown, still keep DB waiting until countdown ends
+      return { ...base, phase: 'active' as GamePhase, showCountdown: true };
     });
   }, [updateSession]);
 
@@ -387,13 +401,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const cinematicWave = getCinematicWave(nextIdx);
       const shouldShowCinematic = cinematicWave !== null && s.teacherSettings.cinematicsEnabled;
 
+      if (shouldShowCinematic) {
+        // Don't update DB yet — wait for cinematic+countdown to finish
+        return {
+          ...s,
+          phase: 'active' as GamePhase,
+          currentMissionIdx: nextIdx,
+          showCinematic: cinematicWave,
+          showCountdown: false,
+        };
+      }
+
+      // No cinematic — update DB immediately
       updateSession({ phase: 'active', current_mission_idx: nextIdx });
       return {
         ...s,
         phase: 'active' as GamePhase,
         currentMissionIdx: nextIdx,
-        showCinematic: shouldShowCinematic ? cinematicWave : null,
-        showCountdown: false, // countdown only after cinematics
+        showCinematic: null,
+        showCountdown: false,
       };
     });
   }, [updateSession]);
@@ -466,8 +492,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const dismissCountdown = useCallback(() => {
+    // Now actually set DB phase to 'active' so students see the mission
+    updateSession({ phase: 'active', current_mission_idx: state.currentMissionIdx });
     setState(s => ({ ...s, showCountdown: false }));
-  }, []);
+  }, [updateSession, state.currentMissionIdx]);
 
   // Final cinematic after last mission
   const handleFinalView = useCallback(() => {
@@ -494,6 +522,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         currentMission,
         totalMissions,
         currentMissionVotes,
+        isTeacherTransitioning,
         setView,
         setRole,
         selectTeam,

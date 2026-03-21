@@ -5,7 +5,7 @@ import PreGameWaiting from "./PreGameWaiting";
 import { useGame } from "@/context/GameContext";
 
 export default function StudentGame() {
-  const { selectedTeam, teamNames, phase, currentMission, currentMissionIdx, totalMissions, hasVoted, submitVote, sessionCode } = useGame();
+  const { selectedTeam, teamNames, phase, currentMission, currentMissionIdx, totalMissions, hasVoted, submitVote, sessionCode, isTeacherTransitioning } = useGame();
 
   const difficultyLabel = currentMission.difficulty === "discussion" ? "Дискусия" : "Бърза";
 
@@ -32,7 +32,7 @@ export default function StudentGame() {
       </div>
 
       <AnimatePresence mode="wait">
-        {phase === "waiting" && (
+        {(phase === "waiting" || (phase === "active" && isTeacherTransitioning)) && (
           <motion.div
             key="waiting"
             initial={{ opacity: 0 }}
@@ -43,7 +43,7 @@ export default function StudentGame() {
           </motion.div>
         )}
 
-        {phase === "active" && !hasVoted && (
+        {phase === "active" && !hasVoted && !isTeacherTransitioning && (
           <motion.div
             key="voting"
             initial={{ opacity: 0, y: 20 }}
@@ -79,7 +79,7 @@ export default function StudentGame() {
           </motion.div>
         )}
 
-        {phase === "active" && hasVoted && (
+        {phase === "active" && hasVoted && !isTeacherTransitioning && (
           <motion.div
             key="voted-waiting"
             initial={{ opacity: 0, scale: 0.9 }}
