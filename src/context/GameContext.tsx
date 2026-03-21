@@ -83,6 +83,19 @@ const FALLBACK_MISSION: Mission = {
 const INITIAL_SCORES = { 1: 0, 2: 0, 3: 0, 4: 0 };
 const INITIAL_TEAM_NAMES = { 1: "Отбор 1", 2: "Отбор 2", 3: "Отбор 3", 4: "Отбор 4" };
 
+const isSameScores = (a: Record<number, number>, b: Record<number, number>) =>
+  [1, 2, 3, 4].every(team => (a[team] || 0) === (b[team] || 0));
+
+const isSameTeamNames = (a: Record<number, string>, b: Record<number, string>) =>
+  [1, 2, 3, 4].every(team => (a[team] || "") === (b[team] || ""));
+
+const isSameConnectedTeams = (a: number[], b: number[]) =>
+  a.length === b.length && a.every((team, idx) => team === b[idx]);
+
+const isSameVotes = (a: Vote[], b: Vote[]) =>
+  a.length === b.length &&
+  a.every((vote, idx) => vote.team === b[idx].team && vote.answer === b[idx].answer && vote.mission_idx === b[idx].mission_idx);
+
 const INITIAL_STATE: GameState = {
   view: "landing",
   role: null,
@@ -140,19 +153,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const currentMission = getSafeMission(state.missions, state.currentMissionIdx);
   const totalMissions = state.missions?.length || 0;
-
-  const isSameScores = (a: Record<number, number>, b: Record<number, number>) =>
-    [1, 2, 3, 4].every(team => (a[team] || 0) === (b[team] || 0));
-
-  const isSameTeamNames = (a: Record<number, string>, b: Record<number, string>) =>
-    [1, 2, 3, 4].every(team => (a[team] || "") === (b[team] || ""));
-
-  const isSameConnectedTeams = (a: number[], b: number[]) =>
-    a.length === b.length && a.every((team, idx) => team === b[idx]);
-
-  const isSameVotes = (a: Vote[], b: Vote[]) =>
-    a.length === b.length &&
-    a.every((vote, idx) => vote.team === b[idx].team && vote.answer === b[idx].answer && vote.mission_idx === b[idx].mission_idx);
 
   const applySessionSnapshot = useCallback((data: any) => {
     setState(s => {
