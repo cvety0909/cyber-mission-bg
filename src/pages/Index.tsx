@@ -1,3 +1,4 @@
+import React from "react";
 import { GameProvider, useGame } from "@/context/GameContext";
 import { AnimatePresence } from "framer-motion";
 import LandingScreen from "@/components/game/LandingScreen";
@@ -35,17 +36,60 @@ const CINEMATIC_LINES: Record<number, [string, string]> = {
   ],
 };
 
+class ViewErrorBoundary extends React.Component<
+  { fallbackView: string; setView: (v: any) => void; children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    console.error("View render error:", error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center grid-bg relative z-10">
+          <div className="text-center cyber-surface p-8 max-w-md">
+            <p className="text-xl font-display font-bold text-foreground mb-4">Възникна грешка при зареждане</p>
+            <p className="text-sm text-muted-foreground font-body mb-6">Моля, върнете се обратно.</p>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false });
+                this.props.setView(this.props.fallbackView as any);
+              }}
+              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-display font-bold uppercase text-sm"
+            >
+              Назад към панела
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function GameRouter() {
-  const { view, showCinematic, showCountdown, dismissCinematic, dismissCountdown, currentMissionIdx, phase } = useGame();
+  const { view, showCinematic, showCountdown, dismissCinematic, dismissCountdown, currentMissionIdx, phase, setView } = useGame();
 
   const isOverlayActive = showCinematic !== null || showCountdown;
   const showWaveBg = phase !== "waiting" && view !== "landing" && view !== "join-session" && view !== "team-select" && view !== "mission-manager";
+
+  const getFallbackView = () => {
+    if (view === "projector") return "teacher-dash";
+    if (view === "student-game") return "landing";
+    return "landing";
+  };
 
   return (
     <>
       {showWaveBg && <WaveBackground missionIdx={currentMissionIdx} />}
 
-      {/* Cinematic overlay */}
       <AnimatePresence>
         {showCinematic !== null && CINEMATIC_LINES[showCinematic] && (
           <CinematicScene
@@ -57,27 +101,29 @@ function GameRouter() {
         )}
       </AnimatePresence>
 
-      {/* Countdown overlay */}
       <AnimatePresence>
         {showCountdown && showCinematic === null && (
           <CountdownScreen key="countdown" onComplete={dismissCountdown} />
         )}
       </AnimatePresence>
 
-      {/* Main view — hidden while cinematic or countdown plays */}
-      {!isOverlayActive && (() => {
-        switch (view) {
-          case "landing": return <LandingScreen />;
-          case "join-session": return <JoinSession />;
-          case "team-select": return <TeamSelect />;
-          case "mission-manager": return <MissionManager />;
-          case "student-game": return <StudentGame />;
-          case "teacher-dash": return <TeacherDashboard />;
-          case "projector": return <ProjectorView />;
-          case "final": return <FinalScreen />;
-          default: return <LandingScreen />;
-        }
-      })()}
+      {!isOverlayActive && (
+        <ViewErrorBoundary fallbackView={getFallbackView()} setView={setView}>
+          {(() => {
+            switch (view) {
+              case "landing": return <LandingScreen />;
+              case "join-session": return <JoinSession />;
+              case "team-select": return <TeamSelect />;
+              case "mission-manager": return <MissionManager />;
+              case "student-game": return <StudentGame />;
+              case "teacher-dash": return <TeacherDashboard />;
+              case "projector": return <ProjectorView />;
+              case "final": return <FinalScreen />;
+              default: return <LandingScreen />;
+            }
+          })()}
+        </ViewErrorBoundary>
+      )}
     </>
   );
 }
